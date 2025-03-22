@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@oobit-crypto-balance/shared": ["libs/shared/src"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "apps/**/*.spec.ts", "libs/**/*.spec.ts"]
+}
