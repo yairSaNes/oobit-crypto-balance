@@ -1,0 +1,13 @@
+### Get all balances
+GET http://localhost:3001/balances
+
+
+### Add a new balance
+POST http://localhost:3001/balances
+Content-Type: application/json
+
+{
+  "userId": "1234",
+  "asset": "BTC",
+  "amount": 55
+}
