@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 
 @Injectable()
 export class FileService{
-  private async readJsonFile<T>(path: string): Promise<T> {
+  public async readJsonFile<T>(path: string): Promise<T> {
     try{
       const data = await fs.readFile(path, 'utf-8');
       return JSON.parse(data) as T;
@@ -14,8 +14,8 @@ export class FileService{
     }
   }
 
-  private async writeJsonFile<T>(path: string): Promise<void> {
-    await fs.writeFile(path, JSON.stringify(DataTransfer, null, 2), 'utf-8');
+  public async writeJsonFile<T>(path: string, data: T): Promise<void> {
+    await fs.writeFile(path, JSON.stringify(data, null, 2), 'utf-8');
   }
 
 }

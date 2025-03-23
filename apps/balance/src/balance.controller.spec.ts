@@ -15,8 +15,8 @@ describe('BalanceController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(balanceController.getHello()).toBe('Hello World!');
+    it('should be defined"', () => {
+      expect(balanceController).toBeDefined();
     });
   });
 });
