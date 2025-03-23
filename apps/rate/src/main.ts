@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { RateServiceModule } from './rate-service.module';
+import { RateServiceModule } from './rate.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(RateServiceModule);

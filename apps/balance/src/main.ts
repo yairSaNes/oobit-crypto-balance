@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { BalanceServiceModule } from './balance-service.module';
+import { BalanceServiceModule } from './balance.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(BalanceServiceModule);
