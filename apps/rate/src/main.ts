@@ -3,6 +3,7 @@ import { RateServiceModule } from './rate.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(RateServiceModule);
-  await app.listen(process.env.port ?? 3000);
+  await app.listen(3002);
+  console.log('Rate Service running on http://localhost:3002');
 }
 bootstrap();
