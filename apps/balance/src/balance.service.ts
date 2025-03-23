@@ -8,12 +8,12 @@ export class BalanceService {
 
   constructor(private readonly fileService: FileService){}
 
-  async getAllBalances(): Promise<CryptoBalance[]>{
+  async getBalances(): Promise<CryptoBalance[]>{
     return this.fileService.readJsonFile<CryptoBalance[]>(this.filePath);
   }
 
-  async addbalance(balance: CryptoBalance): Promise<void> {
-    const balances = await this.getAllBalances();
+  async addBalance(balance: CryptoBalance): Promise<void> {
+    const balances = await this.getBalances();
     balances.push(balance);
     await this.fileService.writeJsonFile(this.filePath, balances);
   }

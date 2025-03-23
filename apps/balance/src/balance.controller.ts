@@ -8,11 +8,11 @@ export class BalanceController {
 
   @Get()
   async getAllBalances(): Promise<CryptoBalance[]>{
-    return this.balanceService.getAllBalances();
+    return this.balanceService.getBalances();
   }
 
   @Post()
   async addBalance(@Body() balance: CryptoBalance): Promise<void>{
-    await this.balanceService.addbalance(balance);
+    await this.balanceService.addBalance(balance);
   }
 }
