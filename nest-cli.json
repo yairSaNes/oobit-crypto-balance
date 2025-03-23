@@ -10,20 +10,20 @@
   "projects": {
     "balance-service": {
       "type": "application",
-      "root": "apps/balance-service",
+      "root": "apps/balance",
       "entryFile": "main",
-      "sourceRoot": "apps/balance-service/src",
+      "sourceRoot": "apps/balance/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/balance-service/tsconfig.app.json"
+        "tsConfigPath": "apps/balance/tsconfig.app.json"
       }
     },
     "rate-service": {
       "type": "application",
-      "root": "apps/rate-service",
+      "root": "apps/rate",
       "entryFile": "main",
-      "sourceRoot": "apps/rate-service/src",
+      "sourceRoot": "apps/rate/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/rate-service/tsconfig.app.json"
+        "tsConfigPath": "apps/rate/tsconfig.app.json"
       }
     },
     "shared": {
