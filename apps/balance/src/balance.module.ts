@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { BalanceServiceController } from './balance-service.controller';
-import { BalanceServiceService } from './balance-service.service';
+import { BalanceController } from './balance.controller';
+import { BalanceService } from './balance.service';
 import { FileService } from '@shared/file.service';
 import { SharedModule } from '@shared/shared.module';
 
 @Module({
   imports: [FileService],
-  controllers: [BalanceServiceController],
-  providers: [BalanceServiceService],
+  controllers: [BalanceController],
+  providers: [BalanceService],
 })
 export class BalanceServiceModule {}
