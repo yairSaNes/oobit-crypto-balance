@@ -13,7 +13,7 @@ export class BalanceService {
   }
 
   async addBalance(balance: CryptoBalance): Promise<void> {
-    const balances = await this.getBalances();
+    const balances: CryptoBalance[] = await this.getBalances();
     balances.push(balance);
     await this.fileService.writeJsonFile(this.filePath, balances);
   }
