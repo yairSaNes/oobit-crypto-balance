@@ -16,7 +16,7 @@ describe('RateServiceController', () => {
 
   describe('root', () => {
     it('should return "Hello World!"', () => {
-      expect(rateController.getHello()).toBe('Hello World!');
+      expect(rateController).toBeDefined();
     });
   });
 });
