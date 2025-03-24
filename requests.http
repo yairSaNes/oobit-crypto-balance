@@ -19,5 +19,16 @@ Content-Type: application/json
   "amount": 0.5
 }
 
-### Get BTC price in USD
-GET http://localhost:3002/rate/price?coin=bitcoin&currency=usd
+### Get ethereum price in ILS
+GET http://localhost:3002/rates/price?coin=ethereum&currency=ils
+### Get ethereum price in ILS
+GET http://localhost:3002/rates/price?coin=ethereum&currency=ils&skipCache=true
+
+### Get ethereum price in USD
+GET http://localhost:3002/rates/price?coin=ethereum&currency=usd
+
+### Get supported coins
+GET http://localhost:3002/rates/coins
+
+### Get supported currencies
+GET http://localhost:3002/rates/currencies

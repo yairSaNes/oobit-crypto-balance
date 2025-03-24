@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { AppError } from '@shared/error-handling';
 import { FileService } from '@shared/file.service';
-import { CryptoRate } from '@shared/interfaces';
 import axios from 'axios';
 
 interface CoinRate {
@@ -30,6 +29,7 @@ export class RateService {
   async onModuleInit(): Promise<void> {
     this.logger.log('Restoring supported coins and currencies from disk...');
     await this.restoreSupportedData();
+    await this.fetchRates();
   }
 
   getSupportedCoins(): string[] {
@@ -41,12 +41,12 @@ export class RateService {
   }
 
   setSupportedCoins(supportedCoins: string[]): void {
-    this.supportedCoins = supportedCoins;
+    this.supportedCoins = [...new Set(supportedCoins)];
     this.logger.log(`updated supported coins with ${supportedCoins.length} coins`);
   }
 
   setSupportedCurrencies(supportedCurrencies: string[]): void {
-    this.supportedCurrencies = supportedCurrencies;
+    this.supportedCurrencies = [...new Set(supportedCurrencies)];
     this.logger.log(`updated supported currencies with ${supportedCurrencies.length} currencies`);
   }
 
@@ -62,9 +62,9 @@ export class RateService {
     }
   }
 
-  getCoinRates(coin: string): CoinRate | undefined {
-    return this.coinRates[coin];
-  }
+  // getCoinRates(coin: string): CoinRate | undefined {
+  //   return this.coinRates[coin];
+  // }
 
   async fetchRates(): Promise<void>{
     if (this.supportedCoins.length === 0 || this.supportedCurrencies.length === 0) {
@@ -100,13 +100,13 @@ export class RateService {
     });
   }
   
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_30_SECONDS)
   async handleCron() {
     this.logger.log('Fetching latest crypto rates...');
     await this.fetchRates();
   }
 
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async saveSuportedDataToDisk(): Promise<void>{
     const data = {
       timeStamp: Date.now(),
@@ -114,7 +114,7 @@ export class RateService {
       supportedCurrencies: this.supportedCurrencies,
     };
     await this.fileService.writeJsonFile(this.filePath, data);
-    this.logger.log('Saved supported coins and currencies to disk');
+    this.logger.log(`Saved ${this.supportedCoins.length} supported coins and ${this.supportedCurrencies.length} supported currencies to disk`);
   }
 
   async restoreSupportedData(): Promise<void> {
@@ -143,7 +143,8 @@ export class RateService {
         return cachedRate;
       } 
     }
-
+    this.addCoin(coin);
+    this.addCurrency(currency);
     try{
       const response = await axios.get(this.COINGECKO_API_URL,{
         params: {
