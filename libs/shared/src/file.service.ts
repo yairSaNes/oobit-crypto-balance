@@ -1,10 +1,9 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 
-
 @Injectable()
-export class FileService{
+export class FileService {
   // public async readJsonFile2<T>(filePath: string): Promise<T> {
   //   try{
   //     if(!fs.existsSync(filePath)){
@@ -14,7 +13,7 @@ export class FileService{
   //     }
   //     const content = await fs.promises.readFile(filePath, 'utf8');
   //     const data = JSON.parse(content);
-      
+
   //     return (Array.isArray(data) ? data : []) as T;
   //   }
   //   catch (err){
@@ -23,12 +22,12 @@ export class FileService{
   // }
 
   public async readJsonFile<T>(filePath: string): Promise<T> {
-    try{
+    try {
       const data = await fs.promises.readFile(filePath, 'utf-8');
       return JSON.parse(data) as T;
-    }
-    catch (err){
-      if(err.code === 'ENOENT'){
+    } catch (err) {
+      const error = err as { code?: string };
+      if (error.code && error.code === 'ENOENT') {
         await this.writeJsonFile(filePath, []);
         return [] as T;
       }
@@ -42,10 +41,13 @@ export class FileService{
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
-    } 
-    catch (error) {
+      await fs.promises.writeFile(
+        filePath,
+        JSON.stringify(data, null, 2),
+        'utf8',
+      );
+    } catch (error) {
       console.error(`Error writing to ${filePath}:`, error);
-    }  
+    }
   }
 }

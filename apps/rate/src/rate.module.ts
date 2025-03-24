@@ -6,7 +6,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { FileService } from '@shared/file.service';
 
 @Module({
-  imports: [SharedModule,ScheduleModule.forRoot()],
+  imports: [SharedModule, ScheduleModule.forRoot()],
   controllers: [RateController],
   providers: [RateService, FileService],
 })

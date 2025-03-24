@@ -6,4 +6,4 @@ async function bootstrap() {
   await app.listen(3001);
   console.log('Balance Service running on http://localhost:3001');
 }
-bootstrap();
+void bootstrap();
