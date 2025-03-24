@@ -1,7 +1,6 @@
 export interface CryptoBalance {
   userId: string;
-  asset: string;
-  amount: number;
+  wallet: { coin: string; amount: number }[];
 }
 
 export interface CryptoRate {
