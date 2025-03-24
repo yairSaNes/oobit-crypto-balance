@@ -4,7 +4,7 @@ export interface CryptoBalance {
 }
 
 export interface CryptoRate {
-  asset: string;
+  coin: string;
   rate: number;
   currency: string;
 }
