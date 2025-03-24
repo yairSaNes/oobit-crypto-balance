@@ -1,6 +1,13 @@
-import { BadRequestException, Body, Controller, Get, Logger, Post, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { RateService } from './rate.service';
-import { CryptoRate } from '@shared/interfaces';
 
 @Controller('rates')
 export class RateController {
@@ -31,7 +38,9 @@ export class RateController {
   @Post('currencies')
   setSupportedCurrencies(@Body() currencies: string[]): { message: string } {
     if (!Array.isArray(currencies) || currencies.length === 0) {
-      throw new BadRequestException('Invalid request: currencies array is required');
+      throw new BadRequestException(
+        'Invalid request: currencies array is required',
+      );
     }
     this.rateService.setSupportedCurrencies(currencies);
     this.logger.log(`Updated supported currencies: ${currencies.join(', ')}`);
@@ -49,7 +58,9 @@ export class RateController {
     }
 
     const skipCacheBoolean = skipCache === 'true';
-    this.logger.log(`Fetching price for ${coin} in ${currency} (skipCache: ${skipCacheBoolean})`);
+    this.logger.log(
+      `Fetching price for ${coin} in ${currency} (skipCache: ${skipCacheBoolean})`,
+    );
     return this.rateService.getCryptoPrice(coin, currency, skipCacheBoolean);
   }
 

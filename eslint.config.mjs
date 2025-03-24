@@ -3,10 +3,14 @@ import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import stylistic from '@stylistic/eslint-plugin-ts';
 
 export default tseslint.config(
   {
     ignores: ['eslint.config.mjs'],
+    plugins: {
+      '@stylistic/ts': stylistic,
+    },
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -29,7 +33,8 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn'
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@/linebreak-style': ['error', 'windows'],
     },
   },
 );

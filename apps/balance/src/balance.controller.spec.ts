@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BalanceController } from './balance.controller';
 import { BalanceService } from './balance.service';
+import { FileService } from '@shared/file.service';
 
 describe('BalanceController', () => {
   let balanceController: BalanceController;
@@ -8,7 +9,7 @@ describe('BalanceController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [BalanceController],
-      providers: [BalanceService],
+      providers: [BalanceService, FileService],
     }).compile();
 
     balanceController = app.get<BalanceController>(BalanceController);
