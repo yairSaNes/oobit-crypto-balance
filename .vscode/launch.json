@@ -1,0 +1,46 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run rate",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+          "run",
+          "start:debug:rate"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/apps/rate"            
+    },  
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run balance",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+          "run",
+          "start:debug:balance"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}"            
+    },  
+    {
+      "name": "Debug NestJS App",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/nest",
+      "args": ["start", "--debug", "--watch"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "autoAttachChildProcesses": true,
+      "cwd": "${workspaceFolder}",
+      "runtimeArgs": ["--nolazy", "--require", "ts-node/register"],
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
+    }
+  ]
+}
