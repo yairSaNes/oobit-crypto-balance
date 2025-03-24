@@ -1,0 +1,20 @@
+### Get all balances
+GET http://localhost:3001/balances
+
+
+
+### Add a new user
+POST http://localhost:3001/balances/add
+X-User-ID: 12345
+Content-Type: application/json
+
+
+### update a new balance
+PUT http://localhost:3001/balances/update
+X-User-ID: 12345
+Content-Type: application/json
+
+{
+  "coin": "bitcloin",
+  "amount": 0.5
+}
