@@ -1,11 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { AppError } from '@shared/error-handling';
 import { FileService } from '@shared/file.service';
 import { CryptoBalance } from '@shared/interfaces';
+import axios from 'axios';
 
 @Injectable()
 export class BalanceService {
   private readonly filePath = 'data/balance.json';
+  private readonly RATE_SERVICE_URL = 'http://localhost:3002/';
 
   constructor(private readonly fileService: FileService) {}
 
@@ -75,13 +78,43 @@ export class BalanceService {
 
   async removeUser(userId: string): Promise<CryptoBalance> {
     const allBalances: CryptoBalance[] = await this.getAllBalances();
-    const userIndex: number = allBalances.findIndex((b) => b.userId === userId);
-    const userBalance: CryptoBalance = allBalances[userIndex];
-    if (userIndex >= 0) {
-      allBalances.splice(userIndex, 1);
-      await this.fileService.writeJsonFile(this.filePath, allBalances);
-      return userBalance;
+    const userBalance = allBalances.find((b) => b.userId === userId);
+    if (!userBalance) {
+      throw new BadRequestException(`User ${userId} does not exist`);
     }
-    throw new BadRequestException(`User ${userId} Does not exist`);
+    const updatedBalances = allBalances.filter((b) => b.userId !== userId);
+    await this.fileService.writeJsonFile(this.filePath, updatedBalances);
+    return userBalance;
+  }
+
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async updateSupportedCoins() {
+    try {
+      const supportedCoins: string[] = await this.getAllSupportedCoins();
+      const response = await axios.post(
+        this.RATE_SERVICE_URL + '/coins',
+        supportedCoins,
+      );
+      console.log(response.data);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        console.error('Error:', error.response?.data || error.message);
+      } else {
+        console.error('Unexpected error:', error);
+      }
+    }
+  }
+
+  async getAllSupportedCoins(): Promise<string[]> {
+    const allBalances: CryptoBalance[] = await this.fileService.readJsonFile<
+      CryptoBalance[]
+    >(this.filePath);
+
+    const coinsSet = new Set<string>();
+    allBalances.forEach((user) => {
+      user.wallet.forEach((entry) => coinsSet.add(entry.coin.toLowerCase())); // Ensuring uniqueness in a case-insensitive manner
+    });
+
+    return Array.from(coinsSet);
   }
 }
