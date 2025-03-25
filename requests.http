@@ -21,6 +21,7 @@ Content-Type: application/json
 
 ### Get ethereum price in ILS
 GET http://localhost:3002/rates/price?coin=ethereum&currency=ils
+
 ### Get ethereum price in ILS
 GET http://localhost:3002/rates/price?coin=ethereum&currency=ils&skipCache=true
 
