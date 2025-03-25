@@ -1,11 +1,16 @@
+// balance service requests
+
 ### Get all balances
 GET http://localhost:3001/balances
 
-
-
 ### Add a new user
-POST http://localhost:3001/balances/add
+POST http://localhost:3001/balances/user/add
 X-User-ID: 12345
+Content-Type: application/json
+
+### delete user
+DELETE http://localhost:3001/balances/user/remove
+X-User-ID: 1234545
 Content-Type: application/json
 
 
@@ -15,21 +20,40 @@ X-User-ID: 12345
 Content-Type: application/json
 
 {
-  "coin": "bitcloin",
-  "amount": 0.5
+  "coin": "1modsadasve token",
+  "amount": -0.5
 }
 
-### Get ethereum price in ILS
-GET http://localhost:3002/rates/price?coin=ethereum&currency=ils
+### Get User Balance Value
+GET http://localhost:3001/balances/user/value?currency=ils
+x-user-id: 12345
 
-### Get ethereum price in ILS
-GET http://localhost:3002/rates/price?coin=ethereum&currency=ils&skipCache=true
+
+
+//rate service requests
+
+### Get bitcoin price in USD
+GET http://localhost:3002/rates/rate?coin=bitcoin&currency=usd
 
 ### Get ethereum price in USD
-GET http://localhost:3002/rates/price?coin=ethereum&currency=usd
+GET http://localhost:3002/rates/rate?coin=ethereum&currency=usd
+
+### Get ethereum price in ILS
+GET http://localhost:3002/rates/rate?coin=ethereum&currency=ils&skipCache=true
+
+### coin not exist
+GET http://localhost:3002/rates/rate?coin=ethdsadaeum&currency=ils&skipCache=true
+
+### currency not exist
+GET http://localhost:3002/rates/rate?coin=ethereum&currency=issss&skipCache=true
+
 
 ### Get supported coins
 GET http://localhost:3002/rates/coins
 
 ### Get supported currencies
 GET http://localhost:3002/rates/currencies
+
+### Get multiple coin rates
+GET http://localhost:3002/rates?coins=ethereum,bitcoin&currency=ils
+Content-Type: application/json

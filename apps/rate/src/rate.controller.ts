@@ -8,6 +8,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { RateService } from './rate.service';
+import { CoinRate } from '@shared/interfaces';
 
 @Controller('rates')
 export class RateController {
@@ -16,39 +17,39 @@ export class RateController {
   constructor(private readonly rateService: RateService) {}
 
   @Get('coins')
-  getSupportedCoins(): string[] {
-    return this.rateService.getSupportedCoins();
+  getTrackedCoins(): string[] {
+    return this.rateService.getTrackedCoins();
   }
 
   @Get('currencies')
-  getSupportedCurrencies(): string[] {
-    return this.rateService.getSupportedCurrencies();
+  getTrackedCurrencies(): string[] {
+    return this.rateService.getTrackedCurrencies();
   }
 
   @Post('coins')
-  setSupportedCoins(@Body() coins: string[]): { message: string } {
+  setTrackedCoins(@Body() coins: string[]): { message: string } {
     if (!Array.isArray(coins) || coins.length === 0) {
       throw new BadRequestException('Invalid request: coins array is required');
     }
-    this.rateService.setSupportedCoins(coins);
-    this.logger.log(`Updated supported coins: ${coins.join(', ')}`);
-    return { message: `Supported coins updated successfully` };
+    this.rateService.setTrackedCoins(coins);
+    this.logger.log(`Updated tracked coins: ${coins.join(', ')}`);
+    return { message: `Tracked coins updated successfully` };
   }
 
   @Post('currencies')
-  setSupportedCurrencies(@Body() currencies: string[]): { message: string } {
+  setTrackedCurrencies(@Body() currencies: string[]): { message: string } {
     if (!Array.isArray(currencies) || currencies.length === 0) {
       throw new BadRequestException(
         'Invalid request: currencies array is required',
       );
     }
-    this.rateService.setSupportedCurrencies(currencies);
-    this.logger.log(`Updated supported currencies: ${currencies.join(', ')}`);
-    return { message: `Supported currencies updated successfully` };
+    this.rateService.setTrackedCurrencies(currencies);
+    this.logger.log(`Updated tracked currencies: ${currencies.join(', ')}`);
+    return { message: `Tracked currencies updated successfully` };
   }
 
-  @Get('price')
-  async getCryptoPrice(
+  @Get('rate')
+  async getCryptoRate(
     @Query('coin') coin: string,
     @Query('currency') currency = 'usd',
     @Query('skipCache') skipCache = 'false',
@@ -61,7 +62,27 @@ export class RateController {
     this.logger.log(
       `Fetching price for ${coin} in ${currency} (skipCache: ${skipCacheBoolean})`,
     );
-    return this.rateService.getCryptoPrice(coin, currency, skipCacheBoolean);
+    return this.rateService.getCryptoRate(coin, currency, skipCacheBoolean);
+  }
+
+  @Get()
+  async getRates(
+    @Query('coins') coins: string,
+    @Query('currency') currency: string = 'usd',
+  ): Promise<{ CoinRates: CoinRate; currency: string }> {
+    if (!coins) {
+      throw new BadRequestException('Coins query parameter is required');
+    }
+
+    const coinList = coins
+      .split(',')
+      .map((coin) => coin.trim())
+      .filter(Boolean);
+    if (coinList.length === 0) {
+      throw new BadRequestException('Coins array is empty');
+    }
+    const rates = await this.rateService.getMultipleRates(coinList, currency);
+    return { CoinRates: rates, currency };
   }
 
   @Get('fetch-rates')
