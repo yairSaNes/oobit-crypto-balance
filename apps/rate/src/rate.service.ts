@@ -28,13 +28,13 @@ export class RateService {
   private supportedCurrencies: string[] = [];
   private cachedCoinRates: Record<string, CoinRate> = {};
   private cacheExpiry: number = 0;
-  private readonly CACHE_TTL_MS = 60 * 1000;
-  // private readonly logger = new Logger(RateService.name);
-  private readonly logger: LoggingService;
+  private readonly CACHE_TTL_MS: number = 60 * 1000;
+  private readonly LOGGING_NAME: string = RateService.name;
 
-  constructor(private readonly fileService: FileService) {
-    this.logger = new LoggingService(RateService.name, fileService);
-  }
+  constructor(
+    private readonly fileService: FileService,
+    private readonly logger: LoggingService,
+  ) {}
 
   async onModuleInit(): Promise<void> {
     this.logger.log('Restoring supported coins and currencies from file...');
@@ -110,7 +110,10 @@ export class RateService {
         await new Promise((res) => setTimeout(res, 10_000));
         return await this.fetchRates();
       }
-      this.logger.error('Error fetching rates from CoinGecko', error);
+      this.logger.error(
+        'Error fetching rates from CoinGecko',
+        error instanceof Error ? error.message : String(error),
+      );
       throw new AppError('Failed to fetch rates from CoinGecko');
     }
   }
@@ -169,7 +172,7 @@ export class RateService {
     } catch (error) {
       this.logger.error(
         'Failed to restore supported coins and currencies from file',
-        error,
+        error instanceof Error ? error.message : String(error),
       );
     }
   }
