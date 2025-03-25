@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { LoggingService } from '@shared/logging.service';
 import { AppError } from '@shared/error-handling';
 import { FileService } from '@shared/file.service';
 import axios, { AxiosError } from 'axios';
@@ -15,9 +16,10 @@ interface SupportedData {
   supportedCurrencies: string[];
 }
 
+type ExchangeRates = Record<string, CoinRate>;
+
 @Injectable()
 export class RateService {
-  private readonly logger = new Logger(RateService.name);
   private readonly filePath = 'data/rates.json';
   private readonly COINGECKO_API_URL =
     'https://api.coingecko.com/api/v3/simple/price';
@@ -26,9 +28,13 @@ export class RateService {
   private supportedCurrencies: string[] = [];
   private cachedCoinRates: Record<string, CoinRate> = {};
   private cacheExpiry: number = 0;
-  private readonly CACHE_TTL_MS = 60 * 1000;
+  private readonly CACHE_TTL_MS: number = 60 * 1000;
+  private readonly LOGGING_NAME: string = RateService.name;
 
-  constructor(private readonly fileService: FileService) {}
+  constructor(
+    private readonly fileService: FileService,
+    private readonly logger: LoggingService,
+  ) {}
 
   async onModuleInit(): Promise<void> {
     this.logger.log('Restoring supported coins and currencies from file...');
@@ -86,7 +92,7 @@ export class RateService {
     try {
       const coins = this.supportedCoins.join(',');
       const currencies = this.supportedCurrencies.join(',');
-      const response = await axios.get(this.COINGECKO_API_URL, {
+      const response = await axios.get<ExchangeRates>(this.COINGECKO_API_URL, {
         params: {
           ids: coins,
           vs_currencies: currencies,
@@ -104,7 +110,10 @@ export class RateService {
         await new Promise((res) => setTimeout(res, 10_000));
         return await this.fetchRates();
       }
-      this.logger.error('Error fetching rates from CoinGecko', error);
+      this.logger.error(
+        'Error fetching rates from CoinGecko',
+        error instanceof Error ? error.message : String(error),
+      );
       throw new AppError('Failed to fetch rates from CoinGecko');
     }
   }
@@ -123,14 +132,14 @@ export class RateService {
 
   //cron job to fetch rates
   @Cron(CronExpression.EVERY_30_SECONDS)
-  async cronFetch() {
+  async fetchPeriodically() {
     this.logger.log('Fetching latest crypto rates...');
     await this.fetchRates();
   }
 
   //stores supportedCoins & supportedcurrencies to file for crash failsafe
   @Cron(CronExpression.EVERY_5_MINUTES)
-  async saveSuportedDataToDisk(): Promise<void> {
+  async saveSuportedDataToFile(): Promise<void> {
     const data = {
       timeStamp: Date.now(),
       supportedCoins: this.supportedCoins,
@@ -163,7 +172,7 @@ export class RateService {
     } catch (error) {
       this.logger.error(
         'Failed to restore supported coins and currencies from file',
-        error,
+        error instanceof Error ? error.message : String(error),
       );
     }
   }
@@ -189,14 +198,13 @@ export class RateService {
     this.addCoin(coin);
     this.addCurrency(currency);
     try {
-      const response = await axios.get(this.COINGECKO_API_URL, {
+      const response = await axios.get<ExchangeRates>(this.COINGECKO_API_URL, {
         params: {
           ids: coin,
           vs_currencies: currency,
         },
       });
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      const rate: number = response.data[coin]?.[currency] ?? 0;
+      const rate = response.data[coin]?.[currency] ?? 0;
       if (rate) {
         this.logger.log(`Got rate for ${coin} in ${currency} via api: ${rate}`);
         this.cachedCoinRates[coin] = {
