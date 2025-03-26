@@ -84,3 +84,11 @@ GET http://localhost:3002/rates/currencies
 ### Get multiple coin rates
 GET http://localhost:3002/rates?coins=ethereum,bitcoin&currency=ils
 Content-Type: application/json
+
+### Set Tracked Coins
+POST http://localhost:3002/rates/coins
+Content-Type: application/json
+
+{
+  "coins": ["bitcoin", "ethereum", "solana"]
+}

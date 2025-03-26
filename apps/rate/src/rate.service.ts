@@ -15,7 +15,9 @@ export class RateService {
   private readonly filePath = path.join(__dirname, '../../data/rates.json');
 
   private readonly COINGECKO_URL = 'https://api.coingecko.com/api/v3/simple';
-  private readonly GET_RATES_URL = this.COINGECKO_URL + '/price';
+  private readonly ENDPOINT_PRICE = '/price';
+  private readonly GET_RATES_URL = this.COINGECKO_URL + this.ENDPOINT_PRICE;
+  private readonly DEFAULT_CURRENCY = 'usd';
 
   private trackedCoins: string[] = [];
   private trackedCurrencies: string[] = [];
@@ -46,9 +48,17 @@ export class RateService {
   }
 
   //changes trackedCoins  array
-  setTrackedCoins(trackedCoins: string[]): void {
-    this.trackedCoins = [...new Set(trackedCoins)];
-    this.logger.log(`updated tracked coins with ${trackedCoins.length} coins`);
+  async setTrackedCoins(trackedCoins: string[]): Promise<void> {
+    try {
+      //fetch rates for new coins to validate coins are supported
+      await this.getMultipleRates(trackedCoins);
+      this.trackedCoins = [...new Set(trackedCoins)];
+      this.logger.log(
+        `updated tracked coins with ${trackedCoins.length} coins`,
+      );
+    } catch (error) {
+      this.errorHandler.handleError(error);
+    }
   }
 
   //changes trackedCurrencies array
@@ -181,7 +191,7 @@ export class RateService {
   //get rate for 1 crypto coin with 1 currency
   async getCoinRate(
     coin: string,
-    currency: string = 'usd',
+    currency: string = this.DEFAULT_CURRENCY,
     skipCache: boolean = false,
   ): Promise<number> {
     //if skipCache wasn't selected or cache isn't expired
@@ -248,7 +258,7 @@ export class RateService {
   //for coins that are in cache it returns the rate from cache
   async getMultipleRates(
     coins: string[],
-    currency: string = 'usd',
+    currency: string = this.DEFAULT_CURRENCY,
   ): Promise<CoinRate> {
     const rates: CoinRate = {};
     const coinsToFetch: string[] = [];

@@ -3,6 +3,9 @@ import { RateService } from './rate.service';
 import { CoinRate } from '@shared/interfaces';
 import { LoggingService } from '@shared/logging.service';
 import { AppError } from '@shared/AppError';
+import { SetTrackedCoinsDto } from './dtos/set-tracked-coins.dto';
+import { GetCoinRateDto } from './dtos/get-coin-rate.dto';
+import { GetRatesDto } from './dtos/get-all-rates.dto';
 
 @Controller('rates')
 export class RateController {
@@ -24,72 +27,46 @@ export class RateController {
   }
 
   @Post('coins')
-  setTrackedCoins(@Body() coins: string[]): { message: string } {
-    if (!Array.isArray(coins) || coins.length === 0) {
-      throw new AppError(
-        'Invalid request: coins array is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    this.rateService.setTrackedCoins(coins);
-    this.logger.log(`Updated tracked coins: ${coins.join(', ')}`);
+  async setTrackedCoins(
+    @Body() { coins }: SetTrackedCoinsDto,
+  ): Promise<{ message: string }> {
+    await this.rateService.setTrackedCoins(coins);
+    this.logger.log(
+      `setTrackedCoins: Updated tracked coins -> ${JSON.stringify(coins)}`,
+    );
     return { message: `Tracked coins updated successfully` };
   }
 
-  @Post('currencies')
-  setTrackedCurrencies(@Body() currencies: string[]): { message: string } {
-    if (!Array.isArray(currencies) || currencies.length === 0) {
-      throw new AppError(
-        'Invalid request: currencies array is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    this.rateService.setTrackedCurrencies(currencies);
-    this.logger.log(`Updated tracked currencies: ${currencies.join(', ')}`);
-    return { message: `Tracked currencies updated successfully` };
-  }
-
   @Get('rate')
-  async getCoinRate(
-    @Query('coin') coin: string,
-    @Query('currency') currency = 'usd',
-    @Query('skipCache') skipCache = 'false',
-  ): Promise<number> {
-    if (!coin) {
-      throw new AppError(
-        'Invalid request: coin parameter is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    const skipCacheBoolean = skipCache === 'true';
+  async getCoinRate(@Query() query: GetCoinRateDto): Promise<number> {
     this.logger.log(
-      `Fetching price for ${coin} in ${currency} (skipCache: ${skipCacheBoolean})`,
+      `Fetching price for ${query.coin} in ${query.currency} (skipCache: ${query.skipCache})`,
     );
-    return this.rateService.getCoinRate(coin, currency, skipCacheBoolean);
+    return this.rateService.getCoinRate(
+      query.coin,
+      query.currency,
+      query.skipCache,
+    );
   }
 
   @Get()
   async getRates(
-    @Query('coins') coins: string,
-    @Query('currency') currency: string = 'usd',
+    @Query() query: GetRatesDto,
   ): Promise<{ CoinRates: CoinRate; currency: string }> {
-    if (!coins) {
-      throw new AppError(
-        'Coins query parameter is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    const coinList = coins
+    const coinList = query.coins
       .split(',')
       .map((coin) => coin.trim())
       .filter(Boolean);
+
     if (coinList.length === 0) {
       throw new AppError('Coins array is empty', HttpStatus.BAD_REQUEST);
     }
-    const rates = await this.rateService.getMultipleRates(coinList, currency);
-    return { CoinRates: rates, currency };
+
+    const rates = await this.rateService.getMultipleRates(
+      coinList,
+      query.currency,
+    );
+    return { CoinRates: rates, currency: query.currency ?? 'usd' };
   }
 
   @Get('fetch-rates')
