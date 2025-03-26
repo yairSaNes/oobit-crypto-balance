@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { genSalt, hash, compare } from 'bcrypt';
+import { genSalt, hash, compare } from 'bcryptjs';
 import { FileService } from './file.service';
 import * as path from 'path';
 import { AppError } from '@shared/AppError'; // Assuming you have a custom AppError class

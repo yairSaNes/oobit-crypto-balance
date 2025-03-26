@@ -12,7 +12,7 @@ import * as path from 'path';
 export class BalanceService {
   // private readonly filePath = 'data/balance.json';
   private readonly filePath = path.join(__dirname, '../../data/balances.json');
-  private readonly RATE_SERVICE_URL = 'http://localhost:3002/rates';
+  private readonly RATE_SERVICE_URL = `${process.env.RATE_SERVICE_URL || 'http://localhost:3002'}/rates`;
 
   constructor(
     private readonly fileService: FileService,
