@@ -135,10 +135,10 @@ export class BalanceService {
   @Cron(CronExpression.EVERY_5_MINUTES)
   async updateTrackedCoins() {
     try {
-      const supportedCoins: string[] = await this.getAllTrackedCoins();
+      const trackedCoins: string[] = await this.getAllTrackedCoins();
       const response = await axios.post(
         this.RATE_SERVICE_URL + '/coins',
-        supportedCoins,
+        trackedCoins,
       );
       console.log(response.data);
     } catch (error: unknown) {
