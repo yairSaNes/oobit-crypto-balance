@@ -3,18 +3,21 @@ import {
   Body,
   Controller,
   Get,
-  Logger,
   Post,
   Query,
 } from '@nestjs/common';
 import { RateService } from './rate.service';
 import { CoinRate } from '@shared/interfaces';
+import { LoggingService } from '@shared/logging.service';
 
 @Controller('rates')
 export class RateController {
-  private readonly logger = new Logger(RateController.name);
-
-  constructor(private readonly rateService: RateService) {}
+  constructor(
+    private readonly rateService: RateService,
+    private readonly logger: LoggingService,
+  ) {
+    this.logger.setContext(RateController.name);
+  }
 
   @Get('coins')
   getTrackedCoins(): string[] {

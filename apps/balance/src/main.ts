@@ -3,7 +3,8 @@ import { BalanceServiceModule } from './balance.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(BalanceServiceModule);
-  await app.listen(3001);
-  console.log('Balance Service running on http://localhost:3001');
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
+  console.log(`Balance Service running on http://localhost:${port}`);
 }
 void bootstrap();

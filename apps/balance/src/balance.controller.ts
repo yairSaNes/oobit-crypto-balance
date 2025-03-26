@@ -14,10 +14,16 @@ import {
 import { BalanceService } from './balance.service';
 import { CryptoBalance } from '@shared/interfaces';
 import { AppError } from '@shared/error-handling';
+import { LoggingService } from '@shared/logging.service';
 
 @Controller('balances')
 export class BalanceController {
-  constructor(private readonly balanceService: BalanceService) {}
+  constructor(
+    private readonly balanceService: BalanceService,
+    private readonly logger: LoggingService,
+  ) {
+    this.logger.setContext(BalanceController.name);
+  }
 
   @Get()
   async getAllUserBalances(): Promise<CryptoBalance[]> {
@@ -92,7 +98,7 @@ export class BalanceController {
         HttpStatus.BAD_REQUEST,
       );
     }
-    console.log(`user id: ${userId}`);
+    this.logger.log(`user id: ${userId}`);
     await this.balanceService.createUser(userId);
     return { message: `user ${userId} created succefully` };
   }
@@ -130,7 +136,7 @@ export class BalanceController {
         HttpStatus.BAD_REQUEST,
       );
     }
-    console.log(`user id: ${userId}`);
+    this.logger.log(`user id: ${userId}`);
     return this.balanceService.removeUser(userId);
   }
 }

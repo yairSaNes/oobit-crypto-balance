@@ -14,21 +14,19 @@ export class RateService {
 
   private readonly COINGECKO_URL = 'https://api.coingecko.com/api/v3/simple';
   private readonly GET_RATES_URL = this.COINGECKO_URL + '/price';
-  private readonly COINS_LIST_URL = this.COINGECKO_URL + 'coins/list';
-  private readonly CURRENCIES_LIST_URL =
-    this.COINGECKO_URL + '/supported_vs_currencies';
 
   private trackedCoins: string[] = [];
   private trackedCurrencies: string[] = [];
   private cachedCoinRates: Record<string, CoinRate> = {};
   private cacheExpiry: number = 0;
   private readonly CACHE_TTL_MS: number = 60 * 1000;
-  private readonly LOGGING_NAME: string = RateService.name;
 
   constructor(
     private readonly fileService: FileService,
     private readonly logger: LoggingService,
-  ) {}
+  ) {
+    this.logger.setContext(RateService.name);
+  }
 
   async onModuleInit(): Promise<void> {
     this.logger.log('Restoring supported coins and currencies from file...');
