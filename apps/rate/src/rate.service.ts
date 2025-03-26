@@ -6,12 +6,13 @@ import { FileService } from '@shared/file.service';
 import axios, { AxiosError } from 'axios';
 import { CoinRate, TrackedData } from '@shared/interfaces';
 import { ErrorHandlingService } from '@shared/error-handling.service';
+import * as path from 'path';
 
 type ExchangeRates = Record<string, CoinRate>;
 
 @Injectable()
 export class RateService {
-  private readonly filePath = 'data/rates.json';
+  private readonly filePath = path.join(__dirname, '../../data/rates.json');
 
   private readonly COINGECKO_URL = 'https://api.coingecko.com/api/v3/simple';
   private readonly GET_RATES_URL = this.COINGECKO_URL + '/price';
