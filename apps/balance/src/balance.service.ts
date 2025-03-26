@@ -8,7 +8,7 @@ import axios, { AxiosError } from 'axios';
 @Injectable()
 export class BalanceService {
   private readonly filePath = 'data/balance.json';
-  private readonly RATE_SERVICE_URL = 'http://localhost:3002';
+  private readonly RATE_SERVICE_URL = 'http://localhost:3002/rates';
 
   constructor(private readonly fileService: FileService) {}
 
@@ -89,7 +89,7 @@ export class BalanceService {
     const coins = userBalance.wallet.map((entry) => entry.coin);
     try {
       const response = await axios.get<{ CoinRates: CoinRate }>(
-        this.RATE_SERVICE_URL + '/rates',
+        this.RATE_SERVICE_URL,
         {
           params: {
             coins: coins.join(','),
@@ -187,7 +187,7 @@ export class BalanceService {
         const targetValue = (targetPercentage / 100) * totalValue;
         // Fetch the current rate of the coin - should be cached
         const response = await axios.get<number>(
-          this.RATE_SERVICE_URL + '/rates/rate',
+          this.RATE_SERVICE_URL + '/rate',
           {
             params: {
               coin: coin,
