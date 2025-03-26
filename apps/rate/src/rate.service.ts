@@ -192,10 +192,9 @@ export class RateService {
   async getCoinRate(
     coin: string,
     currency: string = this.DEFAULT_CURRENCY,
-    skipCache: boolean = false,
   ): Promise<number> {
-    //if skipCache wasn't selected or cache isn't expired
-    if (!skipCache && Date.now() < this.cacheExpiry) {
+    //if cache isn't expired
+    if (Date.now() < this.cacheExpiry) {
       //search cache for rate:
       const cachedRate = this.cachedCoinRates[coin]?.[currency];
       if (cachedRate) {
@@ -244,7 +243,7 @@ export class RateService {
           `Rate limit hit for CoinGecko, retrying in 10 seconds...`,
         );
         await new Promise((res) => setTimeout(res, 10_000));
-        return this.getCoinRate(coin, currency, skipCache);
+        return this.getCoinRate(coin, currency);
       }
       this.logger.error(
         `Error fetching price for ${coin}: ${error instanceof AxiosError && error.message}`,

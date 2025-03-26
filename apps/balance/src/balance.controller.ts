@@ -25,6 +25,31 @@ export class BalanceController {
     this.logger.setContext(BalanceController.name);
   }
 
+  private async validateHeaders(userId: string, password: string) {
+    if (!userId) {
+      throw new AppError(
+        'X-User-ID header is required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!password) {
+      throw new AppError(
+        'X-User-Password header is required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // Validate password
+    const isValidPassword = await this.authService.validatePassword(
+      userId,
+      password,
+    );
+    if (!isValidPassword) {
+      throw new AppError('Invalid password', HttpStatus.UNAUTHORIZED);
+    }
+  }
+
   @Get()
   async getAllUserBalances(
     @Headers('x-user-password') adminPassword: string, // Accept password in the headers
@@ -53,29 +78,7 @@ export class BalanceController {
     @Headers('x-user-id') userId: string,
     @Headers('x-user-password') password: string, // Accept password in the headers
   ): Promise<CryptoBalance> {
-    if (!userId) {
-      throw new AppError(
-        'X-User-ID header is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (!password) {
-      throw new AppError(
-        'X-User-Password header is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    // Validate password
-    const isValidPassword = await this.authService.validatePassword(
-      userId,
-      password,
-    );
-    if (!isValidPassword) {
-      throw new AppError('Invalid password', HttpStatus.UNAUTHORIZED);
-    }
-
+    await this.validateHeaders(userId, password);
     const balance = await this.balanceService.getUserBalance(userId);
     if (!balance) {
       throw new AppError(`User ${userId} not found`, HttpStatus.NOT_FOUND);
@@ -89,29 +92,7 @@ export class BalanceController {
     @Headers('x-user-password') password: string, // Accept password in the headers
     @Query('currency') currency = 'usd',
   ): Promise<{ value: number; currency: string }> {
-    if (!userId) {
-      throw new AppError(
-        'X-User-ID header is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (!password) {
-      throw new AppError(
-        'X-User-Password header is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    // Validate password
-    const isValidPassword = await this.authService.validatePassword(
-      userId,
-      password,
-    );
-    if (!isValidPassword) {
-      throw new AppError('Invalid password', HttpStatus.UNAUTHORIZED);
-    }
-
+    await this.validateHeaders(userId, password);
     const value = await this.balanceService.getUserBalanceValue(
       userId,
       currency,
@@ -128,28 +109,7 @@ export class BalanceController {
     @Headers('x-user-password') password: string, // Accept password in the headers
     @Body() targetPercentages: Record<string, number>,
   ): Promise<CryptoBalance> {
-    if (!userId) {
-      throw new AppError(
-        'X-User-ID header is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    if (!password) {
-      throw new AppError(
-        'X-User-Password header is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    // Validate password
-    const isValidPassword = await this.authService.validatePassword(
-      userId,
-      password,
-    );
-    if (!isValidPassword) {
-      throw new AppError('Invalid password', HttpStatus.UNAUTHORIZED);
-    }
-
+    await this.validateHeaders(userId, password);
     if (!targetPercentages || Object.keys(targetPercentages).length === 0) {
       throw new AppError(
         'Balance data cannot be empty',
@@ -189,26 +149,7 @@ export class BalanceController {
     @Headers('x-user-password') password: string, // Accept password in the headers
     @Body() body: { coin: string; amount: number },
   ): Promise<CryptoBalance> {
-    if (!userId) {
-      throw new AppError(
-        'X-User-ID header is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    if (!password) {
-      throw new AppError(
-        'X-User-Password header is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    // Validate password
-    const isValidPassword = await this.authService.validatePassword(
-      userId,
-      password,
-    );
-    if (!isValidPassword) {
-      throw new AppError('Invalid password', HttpStatus.UNAUTHORIZED);
-    }
+    await this.validateHeaders(userId, password);
     if (!body.coin || !body.amount) {
       throw new AppError(
         'Coin and amount must be provided',
@@ -231,20 +172,7 @@ export class BalanceController {
     @Body()
     transferData: { targetUserId: string; coin: string; amount: number },
   ): Promise<CryptoBalance> {
-    if (!userId) {
-      throw new AppError(
-        'X-User-ID header is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (!password) {
-      throw new AppError(
-        'X-User-Password header is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
+    await this.validateHeaders(userId, password);
     if (
       !transferData.targetUserId ||
       !transferData.coin ||
@@ -257,16 +185,6 @@ export class BalanceController {
         HttpStatus.BAD_REQUEST,
       );
     }
-
-    // Validate the user password
-    const isValidPassword = await this.authService.validatePassword(
-      userId,
-      password,
-    );
-    if (!isValidPassword) {
-      throw new AppError('Invalid password', HttpStatus.UNAUTHORIZED);
-    }
-
     // Call the service to perform the transfer
     const updatedBalance = await this.balanceService.transferCoin(
       userId,
@@ -286,29 +204,7 @@ export class BalanceController {
     @Headers('x-user-id') userId: string,
     @Headers('x-user-password') password: string, // Accept password in the headers
   ): Promise<CryptoBalance> {
-    if (!userId) {
-      throw new AppError(
-        'X-User-ID header is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (!password) {
-      throw new AppError(
-        'X-User-Password header is required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    // Validate password
-    const isValidPassword = await this.authService.validatePassword(
-      userId,
-      password,
-    );
-    if (!isValidPassword) {
-      throw new AppError('Invalid password', HttpStatus.UNAUTHORIZED);
-    }
-
+    await this.validateHeaders(userId, password);
     this.logger.log(`user id: ${userId}`);
     return this.balanceService.removeUser(userId);
   }

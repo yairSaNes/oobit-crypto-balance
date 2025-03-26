@@ -247,7 +247,7 @@ export class BalanceService {
     );
     if (percentageSum !== 100) {
       throw new AppError(
-        'Target percentages must sum up to 100',
+        'Target percentages must sum up to 100%',
         HttpStatus.BAD_REQUEST,
       );
     }

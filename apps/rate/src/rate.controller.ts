@@ -39,14 +39,8 @@ export class RateController {
 
   @Get('rate')
   async getCoinRate(@Query() query: GetCoinRateDto): Promise<number> {
-    this.logger.log(
-      `Fetching price for ${query.coin} in ${query.currency} (skipCache: ${query.skipCache})`,
-    );
-    return this.rateService.getCoinRate(
-      query.coin,
-      query.currency,
-      query.skipCache,
-    );
+    this.logger.log(`Fetching price for ${query.coin} in ${query.currency})`);
+    return this.rateService.getCoinRate(query.coin, query.currency);
   }
 
   @Get()
