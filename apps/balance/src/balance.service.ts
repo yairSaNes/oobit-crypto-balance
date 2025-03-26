@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { AppError } from '@shared/error-handling';
 import { FileService } from '@shared/file.service';
 import { CoinRate, CryptoBalance } from '@shared/interfaces';
+import { LoggingService } from '@shared/logging.service';
 import axios, { AxiosError } from 'axios';
 
 @Injectable()
@@ -10,7 +11,12 @@ export class BalanceService {
   private readonly filePath = 'data/balance.json';
   private readonly RATE_SERVICE_URL = 'http://localhost:3002/rates';
 
-  constructor(private readonly fileService: FileService) {}
+  constructor(
+    private readonly fileService: FileService,
+    private readonly logger: LoggingService,
+  ) {
+    this.logger.setContext(BalanceService.name);
+  }
 
   async getAllBalances(): Promise<CryptoBalance[]> {
     return this.fileService.readJsonFile<CryptoBalance[]>(this.filePath);
@@ -110,12 +116,12 @@ export class BalanceService {
       return totalValue;
     } catch (error) {
       if (error instanceof AxiosError) {
-        console.error(
+        this.logger.error(
           'Error fetching crypto rates:',
           error.response?.data || error.message,
         );
       } else {
-        console.error('Unknown error:', error);
+        this.logger.error('Unknown error:', error);
       }
       throw new AppError('Failed to fetch cryptocurrency prices.');
     }
@@ -140,12 +146,18 @@ export class BalanceService {
         this.RATE_SERVICE_URL + '/coins',
         trackedCoins,
       );
-      console.log(response.data);
+      this.logger.log(response.data);
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        console.error('Error:', error.response?.data || error.message);
+        this.logger.error(
+          'Error:',
+          JSON.stringify(error.response?.data) || error.message,
+        );
       } else {
-        console.error('Unexpected error:', error);
+        this.logger.error(
+          'Unexpected error:',
+          error instanceof Error ? error.message : String(error),
+        );
       }
     }
   }

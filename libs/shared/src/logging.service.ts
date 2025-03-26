@@ -1,12 +1,17 @@
-import { Injectable, LoggerService } from '@nestjs/common';
+import { Injectable, LoggerService, Scope } from '@nestjs/common';
 import { FileService } from './file.service';
 import * as path from 'path';
 
-@Injectable()
+@Injectable({ scope: Scope.TRANSIENT }) // Ensures a new instance per module
 export class LoggingService implements LoggerService {
   private readonly logFilePath = path.join(__dirname, '../../logs/app.log');
+  private context = 'App'; // Default context
 
   constructor(private readonly fileService: FileService) {}
+
+  setContext(context: string) {
+    this.context = context;
+  }
 
   private writeToFile(message: string) {
     try {
@@ -16,26 +21,26 @@ export class LoggingService implements LoggerService {
     }
   }
 
-  log(message: string, context?: string) {
-    const logMessage = `[INFO] ${new Date().toISOString()} ${context ? `[${context}]` : ''} ${message}`;
+  log(message: string) {
+    const logMessage = `[INFO] ${new Date().toISOString()} [${this.context}] ${message}`;
     console.log(logMessage);
     this.writeToFile(logMessage);
   }
 
-  warn(message: string, context?: string) {
-    const logMessage = `[WARN] ${new Date().toISOString()} ${context ? `[${context}]` : ''} ${message}`;
+  warn(message: string) {
+    const logMessage = `[WARN] ${new Date().toISOString()} [${this.context}] ${message}`;
     console.warn(logMessage);
     this.writeToFile(logMessage);
   }
 
-  error(message: string, trace?: string, context?: string) {
-    const logMessage = `[ERROR] ${new Date().toISOString()} ${context ? `[${context}]` : ''} ${message}`;
+  error(message: string, trace?: string) {
+    const logMessage = `[ERROR] ${new Date().toISOString()} [${this.context}] ${message} ${trace ? `\nTrace: ${trace}` : ''}`;
     console.error(logMessage);
     this.writeToFile(logMessage);
   }
 
-  debug(message: string, context?: string) {
-    const logMessage = `[DEBUG] ${new Date().toISOString()} ${context ? `[${context}]` : ''} ${message}`;
+  debug(message: string) {
+    const logMessage = `[DEBUG] ${new Date().toISOString()} [${this.context}] ${message}`;
     console.debug(logMessage);
     this.writeToFile(logMessage);
   }
