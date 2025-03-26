@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { BalanceService } from './balance.service';
 import { CryptoBalance } from '@shared/interfaces';
+import { AppError } from '@shared/error-handling';
 
 @Controller('balances')
 export class BalanceController {
@@ -63,6 +64,24 @@ export class BalanceController {
     return { value: value, currency };
   }
 
+  @Put('user/rebalance')
+  async rebalanceUser(
+    @Headers('x-user-id') userId: string,
+    @Body() targetPercentages: Record<string, number>,
+    // ): Promise<void> {
+  ): Promise<CryptoBalance> {
+    if (!userId) {
+      throw new HttpException(
+        'X-User-ID header is required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (!targetPercentages || Object.keys(targetPercentages).length === 0) {
+      throw new AppError('Balance data cannot be empty', 400);
+    }
+    return this.balanceService.rebalanceUser(userId, targetPercentages);
+  }
+
   @Post('user/add')
   async createUser(
     @Headers('x-user-id') userId: string,
@@ -78,7 +97,7 @@ export class BalanceController {
     return { message: `user ${userId} created succefully` };
   }
 
-  @Put('update')
+  @Put('user/update')
   async updateBalance(
     @Headers('x-user-id') userId: string,
     @Body() body: { coin: string; amount: number },

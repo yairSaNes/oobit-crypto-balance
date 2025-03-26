@@ -49,7 +49,7 @@ export class RateController {
   }
 
   @Get('rate')
-  async getCryptoRate(
+  async getCoinRate(
     @Query('coin') coin: string,
     @Query('currency') currency = 'usd',
     @Query('skipCache') skipCache = 'false',
@@ -62,7 +62,7 @@ export class RateController {
     this.logger.log(
       `Fetching price for ${coin} in ${currency} (skipCache: ${skipCacheBoolean})`,
     );
-    return this.rateService.getCryptoRate(coin, currency, skipCacheBoolean);
+    return this.rateService.getCoinRate(coin, currency, skipCacheBoolean);
   }
 
   @Get()
