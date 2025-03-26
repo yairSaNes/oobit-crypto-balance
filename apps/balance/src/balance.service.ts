@@ -1,6 +1,7 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { AppError } from '@shared/error-handling';
+import { AppError } from '@shared/AppError';
+import { ErrorHandlingService } from '@shared/error-handling.service';
 import { FileService } from '@shared/file.service';
 import { CoinRate, CryptoBalance } from '@shared/interfaces';
 import { LoggingService } from '@shared/logging.service';
@@ -14,6 +15,7 @@ export class BalanceService {
   constructor(
     private readonly fileService: FileService,
     private readonly logger: LoggingService,
+    private readonly errorHandler: ErrorHandlingService,
   ) {
     this.logger.setContext(BalanceService.name);
   }
@@ -40,7 +42,7 @@ export class BalanceService {
       (balance) => balance.userId === userId,
     );
     if (!userBalance) {
-      throw new AppError(`User ${userId} not found.`);
+      throw new AppError(`User ${userId} not found.`, HttpStatus.NOT_FOUND);
     }
 
     // Check if the user already holds the coin
@@ -52,7 +54,10 @@ export class BalanceService {
       const lastAmount = userBalance.wallet[existingCoinIndex].amount;
       const newAmount = lastAmount + amount;
       if (newAmount < 0) {
-        throw new AppError(`Amount in wallet is insufficient (${lastAmount}).`);
+        throw new AppError(
+          `Amount in wallet is insufficient (${lastAmount}).`,
+          HttpStatus.BAD_REQUEST,
+        );
       }
       if (newAmount === 0) {
         userBalance.wallet.splice(existingCoinIndex, 1);
@@ -80,7 +85,7 @@ export class BalanceService {
       allBalances.push({ userId, wallet: [] });
       await this.fileService.writeJsonFile(this.filePath, allBalances);
     } else {
-      throw new BadRequestException(`User ${userId} already exist`);
+      throw new AppError(`User ${userId} already exist`, HttpStatus.CONFLICT);
     }
   }
 
@@ -88,29 +93,31 @@ export class BalanceService {
     userId: string,
     currency: string = 'usd',
   ): Promise<number> {
-    const userBalance = await this.getUserBalance(userId);
-    if (!userBalance) {
-      throw new BadRequestException(`User ${userId} does not exist`);
-    }
-    const coins = userBalance.wallet.map((entry) => entry.coin);
     try {
+      const userBalance = await this.getUserBalance(userId);
+      if (!userBalance) {
+        throw new AppError(
+          `User ${userId} does not exist`,
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      const coins = userBalance.wallet.map((entry) => entry.coin);
       const response = await axios.get<{ CoinRates: CoinRate }>(
         this.RATE_SERVICE_URL,
-        {
-          params: {
-            coins: coins.join(','),
-            currency: currency,
-          },
-        },
+        { params: { coins: coins.join(','), currency } },
       );
 
       const rates = response.data.CoinRates;
       if (!rates) {
-        throw new AppError('Invalid response from rate service');
+        throw new AppError(
+          'Invalid response from rate service',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       }
 
       const totalValue = userBalance.wallet.reduce((total, entry) => {
-        const rate = rates[entry.coin] ?? 0; // Default to 0 if rate is missing
+        const rate = rates[entry.coin] ?? 0;
         return total + entry.amount * rate;
       }, 0);
       return totalValue;
@@ -118,12 +125,12 @@ export class BalanceService {
       if (error instanceof AxiosError) {
         this.logger.error(
           'Error fetching crypto rates:',
-          error.response?.data || error.message,
+          JSON.stringify(error.response?.data) || String(error.message),
         );
       } else {
-        this.logger.error('Unknown error:', error);
+        this.logger.error('Unknown error:', String(error));
       }
-      throw new AppError('Failed to fetch cryptocurrency prices.');
+      this.errorHandler.handleError(error);
     }
   }
 
@@ -131,7 +138,7 @@ export class BalanceService {
     const allBalances: CryptoBalance[] = await this.getAllBalances();
     const userBalance = allBalances.find((b) => b.userId === userId);
     if (!userBalance) {
-      throw new BadRequestException(`User ${userId} does not exist`);
+      throw new AppError(`User ${userId} does not exist`, HttpStatus.NOT_FOUND);
     }
     const updatedBalances = allBalances.filter((b) => b.userId !== userId);
     await this.fileService.writeJsonFile(this.filePath, updatedBalances);
@@ -146,11 +153,13 @@ export class BalanceService {
         this.RATE_SERVICE_URL + '/coins',
         trackedCoins,
       );
-      this.logger.log(response.data);
-    } catch (error: unknown) {
+      this.logger.log(
+        `Updated tracked coins: ${JSON.stringify(response.data)}`,
+      );
+    } catch (error) {
       if (axios.isAxiosError(error)) {
         this.logger.error(
-          'Error:',
+          'Error fetching tracked coins:',
           JSON.stringify(error.response?.data) || error.message,
         );
       } else {
@@ -182,14 +191,17 @@ export class BalanceService {
     const allBalances: CryptoBalance[] = await this.getAllBalances();
     const userBalance = allBalances.find((b) => b.userId === userId);
     if (!userBalance) {
-      throw new AppError(`User ${userId} not found.`);
+      throw new AppError(`User ${userId} not found.`, HttpStatus.NOT_FOUND);
     }
     const percentageSum = Object.values(targetPercentages).reduce(
       (sum, percentage) => sum + percentage,
       0,
     );
     if (percentageSum !== 100) {
-      throw new AppError('Target percentages must sum up to 100');
+      throw new AppError(
+        'Target percentages must sum up to 100',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const totalValue = await this.getUserBalanceValue(userId);

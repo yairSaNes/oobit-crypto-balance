@@ -1,14 +1,8 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Post, Query } from '@nestjs/common';
 import { RateService } from './rate.service';
 import { CoinRate } from '@shared/interfaces';
 import { LoggingService } from '@shared/logging.service';
+import { AppError } from '@shared/AppError';
 
 @Controller('rates')
 export class RateController {
@@ -32,7 +26,10 @@ export class RateController {
   @Post('coins')
   setTrackedCoins(@Body() coins: string[]): { message: string } {
     if (!Array.isArray(coins) || coins.length === 0) {
-      throw new BadRequestException('Invalid request: coins array is required');
+      throw new AppError(
+        'Invalid request: coins array is required',
+        HttpStatus.BAD_REQUEST,
+      );
     }
     this.rateService.setTrackedCoins(coins);
     this.logger.log(`Updated tracked coins: ${coins.join(', ')}`);
@@ -42,8 +39,9 @@ export class RateController {
   @Post('currencies')
   setTrackedCurrencies(@Body() currencies: string[]): { message: string } {
     if (!Array.isArray(currencies) || currencies.length === 0) {
-      throw new BadRequestException(
+      throw new AppError(
         'Invalid request: currencies array is required',
+        HttpStatus.BAD_REQUEST,
       );
     }
     this.rateService.setTrackedCurrencies(currencies);
@@ -58,7 +56,10 @@ export class RateController {
     @Query('skipCache') skipCache = 'false',
   ): Promise<number> {
     if (!coin) {
-      throw new Error('Invalid request: coin parameter is required');
+      throw new AppError(
+        'Invalid request: coin parameter is required',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const skipCacheBoolean = skipCache === 'true';
@@ -74,7 +75,10 @@ export class RateController {
     @Query('currency') currency: string = 'usd',
   ): Promise<{ CoinRates: CoinRate; currency: string }> {
     if (!coins) {
-      throw new BadRequestException('Coins query parameter is required');
+      throw new AppError(
+        'Coins query parameter is required',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const coinList = coins
@@ -82,7 +86,7 @@ export class RateController {
       .map((coin) => coin.trim())
       .filter(Boolean);
     if (coinList.length === 0) {
-      throw new BadRequestException('Coins array is empty');
+      throw new AppError('Coins array is empty', HttpStatus.BAD_REQUEST);
     }
     const rates = await this.rateService.getMultipleRates(coinList, currency);
     return { CoinRates: rates, currency };
