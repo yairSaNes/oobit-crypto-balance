@@ -175,7 +175,7 @@ export class RateService {
   }
 
   //get rate for 1 crypto coin with 1 currency
-  async getCryptoRate(
+  async getCoinRate(
     coin: string,
     currency: string = 'usd',
     skipCache: boolean = false,
@@ -221,7 +221,7 @@ export class RateService {
           `Rate limit hit for CoinGecko, retrying in 10 seconds...`,
         );
         await new Promise((res) => setTimeout(res, 10_000));
-        return this.getCryptoRate(coin, currency, skipCache);
+        return this.getCoinRate(coin, currency, skipCache);
       }
       this.logger.error(
         `Error fetching price for ${coin}: ${error instanceof AxiosError && error.message}`,

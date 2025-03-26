@@ -133,9 +133,9 @@ export class BalanceService {
   }
 
   @Cron(CronExpression.EVERY_5_MINUTES)
-  async updateSupportedCoins() {
+  async updateTrackedCoins() {
     try {
-      const supportedCoins: string[] = await this.getAllSupportedCoins();
+      const supportedCoins: string[] = await this.getAllTrackedCoins();
       const response = await axios.post(
         this.RATE_SERVICE_URL + '/coins',
         supportedCoins,
@@ -150,7 +150,7 @@ export class BalanceService {
     }
   }
 
-  async getAllSupportedCoins(): Promise<string[]> {
+  async getAllTrackedCoins(): Promise<string[]> {
     const allBalances: CryptoBalance[] = await this.fileService.readJsonFile<
       CryptoBalance[]
     >(this.filePath);
@@ -161,5 +161,49 @@ export class BalanceService {
     });
 
     return Array.from(coinsSet);
+  }
+
+  async rebalanceUser(
+    userId: string,
+    targetPercentages: Record<string, number>,
+  ): Promise<CryptoBalance> {
+    const allBalances: CryptoBalance[] = await this.getAllBalances();
+    const userBalance = allBalances.find((b) => b.userId === userId);
+    if (!userBalance) {
+      throw new AppError(`User ${userId} not found.`);
+    }
+    const percentageSum = Object.values(targetPercentages).reduce(
+      (sum, percentage) => sum + percentage,
+      0,
+    );
+    if (percentageSum !== 100) {
+      throw new AppError('Target percentages must sum up to 100');
+    }
+
+    const totalValue = await this.getUserBalanceValue(userId);
+    const newWallet = await Promise.all(
+      Object.keys(targetPercentages).map(async (coin) => {
+        const targetPercentage = targetPercentages[coin] ?? 0;
+        const targetValue = (targetPercentage / 100) * totalValue;
+        // Fetch the current rate of the coin - should be cached
+        const response = await axios.get<number>(
+          this.RATE_SERVICE_URL + '/rates/rate',
+          {
+            params: {
+              coin: coin,
+            },
+          },
+        );
+        const rate: number = response.data;
+        const newAmount = targetValue / rate;
+        return { coin: coin, amount: newAmount };
+      }),
+    );
+
+    userBalance.wallet = newWallet;
+    const updatedBalances = allBalances.filter((b) => b.userId !== userId);
+    updatedBalances.push(userBalance);
+    await this.fileService.writeJsonFile(this.filePath, updatedBalances);
+    return userBalance;
   }
 }
