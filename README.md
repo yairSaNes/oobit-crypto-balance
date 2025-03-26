@@ -12,6 +12,8 @@ docker run -p 3001:3001 -e PORT=3001 -e RATE_SERVICE_URL=http://host.docker.inte
 ## Run rate-service container
 docker run -p 3002:3002 -e PORT=3002 rate-service
 
+------------------------------------------------------------------------------------------------------------------
+
 # to run localy run: 
 
 npm install
