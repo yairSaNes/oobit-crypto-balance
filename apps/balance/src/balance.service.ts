@@ -122,13 +122,13 @@ export class BalanceService {
       }, 0);
       return totalValue;
     } catch (error) {
-      if (error instanceof AxiosError) {
+      if (axios.isAxiosError(error)) {
         this.logger.error(
-          'Error fetching crypto rates:',
-          JSON.stringify(error.response?.data) || String(error.message),
+          'Error fetching crypto rates:' +
+            JSON.stringify(error.response?.data) || String(error.message),
         );
       } else {
-        this.logger.error('Unknown error:', String(error));
+        this.logger.error('Unknown error:' + String(error));
       }
       this.errorHandler.handleError(error);
     }
@@ -159,13 +159,13 @@ export class BalanceService {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         this.logger.error(
-          'Error fetching tracked coins:',
-          JSON.stringify(error.response?.data) || error.message,
+          'Error fetching tracked coins:' +
+            JSON.stringify(error.response?.data) || error.message,
         );
       } else {
         this.logger.error(
-          'Unexpected error:',
-          error instanceof Error ? error.message : String(error),
+          'Unexpected error: ' +
+            (error instanceof Error ? error.message : String(error)),
         );
       }
     }
@@ -192,6 +192,12 @@ export class BalanceService {
     const userBalance = allBalances.find((b) => b.userId === userId);
     if (!userBalance) {
       throw new AppError(`User ${userId} not found.`, HttpStatus.NOT_FOUND);
+    }
+    if (userBalance.wallet.length === 0) {
+      throw new AppError(
+        `User ${userId} has no balance.`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
     const percentageSum = Object.values(targetPercentages).reduce(
       (sum, percentage) => sum + percentage,
