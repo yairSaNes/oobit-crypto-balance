@@ -6,10 +6,12 @@ import { FileService } from '@shared/file.service';
 import { CoinRate, CryptoBalance } from '@shared/interfaces';
 import { LoggingService } from '@shared/logging.service';
 import axios from 'axios';
+import * as path from 'path';
 
 @Injectable()
 export class BalanceService {
-  private readonly filePath = 'data/balance.json';
+  // private readonly filePath = 'data/balance.json';
+  private readonly filePath = path.join(__dirname, '../../data/balances.json');
   private readonly RATE_SERVICE_URL = 'http://localhost:3002/rates';
 
   constructor(

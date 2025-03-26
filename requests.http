@@ -2,21 +2,25 @@
 
 ### Get all balances
 GET http://localhost:3001/balances
+X-User-Password: admin123
 
 ### Add a new user
 POST http://localhost:3001/balances/user/add
-X-User-ID: 1234567
+X-User-ID: 123456
+X-User-Password: 123456
 Content-Type: application/json
 
 ### delete user
 DELETE http://localhost:3001/balances/user/remove
-X-User-ID: 1234545
+X-User-ID: 123456
+X-User-Password: 123456
 Content-Type: application/json
 
 
 ### update a new balance
 PUT http://localhost:3001/balances/user/update
-X-User-ID: 1234567
+X-User-ID: 123456
+X-User-Password: 123456
 Content-Type: application/json
 
 {
@@ -27,6 +31,7 @@ Content-Type: application/json
 ### rebalance
 PUT http://localhost:3001/balances/user/rebalance
 X-User-ID: 123456
+X-User-Password: admin123
 Content-Type: application/json
 
 {
@@ -35,7 +40,8 @@ Content-Type: application/json
 
 ### Get User Balance Value
 GET http://localhost:3001/balances/user/value?currency=ils
-x-user-id: 1234567
+x-user-id: 123456
+X-User-Password: admin123
 
 
 
