@@ -40,7 +40,7 @@ Content-Type: application/json
 
 ### Get User Balance Value
 GET http://localhost:3001/balances/user/value?currency=ils
-x-user-id: 12345678
+x-user-id: 123456
 X-User-Password: admin123
 
 ###transfer coin between users
