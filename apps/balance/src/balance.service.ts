@@ -5,7 +5,7 @@ import { ErrorHandlingService } from '@shared/error-handling.service';
 import { FileService } from '@shared/file.service';
 import { CoinRate, CryptoBalance } from '@shared/interfaces';
 import { LoggingService } from '@shared/logging.service';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
 @Injectable()
 export class BalanceService {
