@@ -6,8 +6,8 @@ X-User-Password: admin123
 
 ### Add a new user
 POST http://localhost:3001/balances/user/add
-X-User-ID: 123456
-X-User-Password: 123456
+X-User-ID: 1234567
+X-User-Password: 1234567
 Content-Type: application/json
 
 ### delete user
@@ -42,6 +42,18 @@ Content-Type: application/json
 GET http://localhost:3001/balances/user/value?currency=ils
 x-user-id: 123456
 X-User-Password: admin123
+
+###transfer coin between users
+PUT http://localhost:3001/balances/user/transfer
+X-User-ID: 123456
+X-User-Password: 123456
+Content-Type: application/json
+
+{
+  "targetUserId": "123456",
+  "coin": "bitcoin",
+  "amount": 0.5
+}
 
 
 

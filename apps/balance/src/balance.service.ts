@@ -57,7 +57,7 @@ export class BalanceService {
       const newAmount = lastAmount + amount;
       if (newAmount < 0) {
         throw new AppError(
-          `Amount in wallet is insufficient (${lastAmount}).`,
+          `${coin} amount in wallet is insufficient (${lastAmount}).`,
           HttpStatus.BAD_REQUEST,
         );
       }
@@ -70,12 +70,52 @@ export class BalanceService {
       // if coin doesn't exist, add it to the user's wallet
       if (amount > 0) {
         userBalance.wallet.push({ coin, amount });
+      } else {
+        throw new AppError(
+          `Coin ${coin} not found in wallet.`,
+          HttpStatus.BAD_REQUEST,
+        );
       }
     }
     // Save the updated balance data
     await this.fileService.writeJsonFile(this.filePath, allBalances);
     // Return the updated user balance
     return userBalance;
+  }
+
+  async transferCoin(
+    sourceUserId: string,
+    targetUserId: string,
+    coin: string,
+    amount: number,
+  ): Promise<CryptoBalance> {
+    //validating target user exist
+    const allBalances: CryptoBalance[] = await this.getAllBalances();
+    const targetUserBalance = allBalances.find(
+      (balance) => balance.userId === targetUserId,
+    );
+    if (!targetUserBalance) {
+      throw new AppError(
+        `Target user ${targetUserId} not found`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    // Perform the transfer by updating both users' balances
+    // Deduct from source user
+    // this also validates source user exists and has sufficient amount
+    this.logger.log(
+      `Transferring ${amount} ${coin} from ${sourceUserId} to ${targetUserId}...`,
+    );
+    const updatedBalance: CryptoBalance = await this.updateBalance(
+      sourceUserId,
+      coin,
+      -amount,
+    );
+    await this.updateBalance(targetUserId, coin, amount); // Add to target user
+    this.logger.log(`Transfer complete.}`);
+
+    // Return the updated balance for the source user
+    return updatedBalance;
   }
 
   async createUser(userId: string): Promise<void> {

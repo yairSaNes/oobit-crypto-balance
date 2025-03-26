@@ -195,14 +195,12 @@ export class BalanceController {
         HttpStatus.BAD_REQUEST,
       );
     }
-
     if (!password) {
       throw new AppError(
         'X-User-Password header is required',
         HttpStatus.BAD_REQUEST,
       );
     }
-
     // Validate password
     const isValidPassword = await this.authService.validatePassword(
       userId,
@@ -211,7 +209,6 @@ export class BalanceController {
     if (!isValidPassword) {
       throw new AppError('Invalid password', HttpStatus.UNAUTHORIZED);
     }
-
     if (!body.coin || !body.amount) {
       throw new AppError(
         'Coin and amount must be provided',
@@ -225,6 +222,63 @@ export class BalanceController {
       );
     }
     return this.balanceService.updateBalance(userId, body.coin, body.amount);
+  }
+
+  @Put('user/transfer')
+  async transferCoin(
+    @Headers('x-user-id') userId: string,
+    @Headers('x-user-password') password: string,
+    @Body()
+    transferData: { targetUserId: string; coin: string; amount: number },
+  ): Promise<CryptoBalance> {
+    if (!userId) {
+      throw new AppError(
+        'X-User-ID header is required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!password) {
+      throw new AppError(
+        'X-User-Password header is required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (
+      !transferData.targetUserId ||
+      !transferData.coin ||
+      transferData.amount === undefined ||
+      transferData.amount <= 0 ||
+      userId === transferData.targetUserId
+    ) {
+      throw new AppError(
+        'Target user ID, coin, or amount are missing or invalid',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // Validate the user password
+    const isValidPassword = await this.authService.validatePassword(
+      userId,
+      password,
+    );
+    if (!isValidPassword) {
+      throw new AppError('Invalid password', HttpStatus.UNAUTHORIZED);
+    }
+
+    // Call the service to perform the transfer
+    const updatedBalance = await this.balanceService.transferCoin(
+      userId,
+      transferData.targetUserId,
+      transferData.coin,
+      transferData.amount,
+    );
+
+    if (!updatedBalance) {
+      throw new AppError('Transfer failed', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    return updatedBalance;
   }
 
   @Delete('user/remove')

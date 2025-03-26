@@ -91,7 +91,7 @@ export class AuthService {
       >(this.passwordFilePath);
       const storedHash = passwords[userId];
       if (!storedHash)
-        throw new AppError('User not found', HttpStatus.NOT_FOUND);
+        throw new AppError(`User ${userId} not found`, HttpStatus.NOT_FOUND);
 
       const isValid = await compare(password, storedHash);
       if (!isValid)
