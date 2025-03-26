@@ -1,10 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { LoggingService } from '@shared/logging.service';
-import { AppError } from '@shared/error-handling';
+import { AppError } from '@shared/AppError';
 import { FileService } from '@shared/file.service';
 import axios, { AxiosError } from 'axios';
 import { CoinRate, TrackedData } from '@shared/interfaces';
+import { ErrorHandlingService } from '@shared/error-handling.service';
 
 type ExchangeRates = Record<string, CoinRate>;
 
@@ -24,13 +25,14 @@ export class RateService {
   constructor(
     private readonly fileService: FileService,
     private readonly logger: LoggingService,
+    private readonly errorHandler: ErrorHandlingService,
   ) {
     this.logger.setContext(RateService.name);
   }
 
   async onModuleInit(): Promise<void> {
     this.logger.log('Restoring supported coins and currencies from file...');
-    await this.restoreSupportedData(); //restore data from file after crash
+    await this.restoreTrackedData(); //restore data from file after crash
     await this.fetchRates(); //get rates from coin gecho api
   }
 
@@ -90,7 +92,10 @@ export class RateService {
         `Fetched rates for ${Object.keys(response.data as object).length} coins.`,
       );
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.status === 429) {
+      if (
+        axios.isAxiosError(error) &&
+        error.response?.status === HttpStatus.TOO_MANY_REQUESTS
+      ) {
         this.logger.warn(
           `Rate limit hit for CoinGecko, retrying in 10 seconds...`,
         );
@@ -101,7 +106,7 @@ export class RateService {
         'Error fetching rates from CoinGecko',
         error instanceof Error ? error.message : String(error),
       );
-      throw new AppError('Failed to fetch rates from CoinGecko');
+      this.errorHandler.handleError(error);
     }
   }
 
@@ -134,7 +139,7 @@ export class RateService {
 
   //stores trackedCoins & supportedcurrencies to file for crash failsafe
   @Cron(CronExpression.EVERY_5_MINUTES)
-  async saveSuportedDataToFile(): Promise<void> {
+  async saveTrackedDataToFile(): Promise<void> {
     const data = {
       timeStamp: Date.now(),
       trackedCoins: this.trackedCoins,
@@ -147,7 +152,7 @@ export class RateService {
   }
 
   // restore supported data from file
-  async restoreSupportedData(): Promise<void> {
+  async restoreTrackedData(): Promise<void> {
     try {
       const data = await this.fileService.readJsonFile<TrackedData>(
         this.filePath,
@@ -166,8 +171,8 @@ export class RateService {
       );
     } catch (error) {
       this.logger.error(
-        'Failed to restore supported coins and currencies from file',
-        error instanceof Error ? error.message : String(error),
+        'Failed to restore supported coins and currencies from file: ' +
+          (error instanceof Error ? error.message : String(error)),
       );
     }
   }
@@ -199,12 +204,18 @@ export class RateService {
       });
       const coinData = response.data[coin];
       if (!coinData) {
-        throw new BadRequestException(`coin ${coin} is not supported`);
+        throw new AppError(
+          `coin ${coin} is not supported`,
+          HttpStatus.BAD_REQUEST,
+        );
       }
       this.addTrackedCoin(coin);
       const rate = coinData[currency];
       if (!rate) {
-        throw new BadRequestException(`Currency ${currency} is not supported`);
+        throw new AppError(
+          `Currency ${currency} is not supported`,
+          HttpStatus.BAD_REQUEST,
+        );
       }
       this.addTrackedCurrency(currency);
       this.logger.log(`Got rate for ${coin} in ${currency} via api: ${rate}`);
@@ -214,7 +225,10 @@ export class RateService {
       };
       return rate;
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.status === 429) {
+      if (
+        axios.isAxiosError(error) &&
+        error.response?.status === HttpStatus.TOO_MANY_REQUESTS
+      ) {
         this.logger.warn(
           `Rate limit hit for CoinGecko, retrying in 10 seconds...`,
         );
@@ -224,7 +238,7 @@ export class RateService {
       this.logger.error(
         `Error fetching price for ${coin}: ${error instanceof AxiosError && error.message}`,
       );
-      throw error;
+      this.errorHandler.handleError(error);
     }
   }
 
@@ -259,20 +273,25 @@ export class RateService {
           },
         });
         if (Object.keys(response.data).length === 0) {
-          throw new BadRequestException(
+          throw new AppError(
             `one or more coins are not supported (${coinsToFetch.join(', ')})`,
+            HttpStatus.BAD_REQUEST,
           );
         }
         Object.keys(response.data).forEach((coin) => {
           const coinData = response.data[coin];
           if (!coinData) {
-            throw new BadRequestException(`coin ${coin} is not supported`);
+            throw new AppError(
+              `coin ${coin} is not supported`,
+              HttpStatus.BAD_REQUEST,
+            );
           }
           this.addTrackedCoin(coin);
           const rate = coinData[currency];
           if (!rate) {
-            throw new BadRequestException(
+            throw new AppError(
               `Currency ${currency} is not supported`,
+              HttpStatus.BAD_REQUEST,
             );
           }
           rates[coin] = rate;
@@ -281,7 +300,10 @@ export class RateService {
         //update cache
         this.cacheRates(response.data as Record<string, CoinRate>);
       } catch (error) {
-        if (error instanceof AxiosError && error.response?.status === 429) {
+        if (
+          axios.isAxiosError(error) &&
+          error.response?.status === HttpStatus.TOO_MANY_REQUESTS
+        ) {
           this.logger.warn(
             `Rate limit hit for CoinGecko, retrying in 10 seconds...`,
           );
@@ -289,11 +311,10 @@ export class RateService {
           return this.getMultipleRates(coins, currency);
         }
         this.logger.error(
-          `Error fetching prices for ${coinsToFetch.join(', ')}: ${
-            error instanceof AxiosError && error.message
-          }`,
+          `Error fetching prices for ${coinsToFetch.join(', ')}: + 
+          ${error instanceof Error ? error.message : String(error)}`,
         );
-        throw error;
+        this.errorHandler.handleError(error);
       }
     }
     return rates;

@@ -4,16 +4,14 @@ import {
   Post,
   Body,
   Headers,
-  HttpException,
   HttpStatus,
   Put,
-  BadRequestException,
   Delete,
   Query,
 } from '@nestjs/common';
 import { BalanceService } from './balance.service';
 import { CryptoBalance } from '@shared/interfaces';
-import { AppError } from '@shared/error-handling';
+import { AppError } from '@shared/AppError';
 import { LoggingService } from '@shared/logging.service';
 
 @Controller('balances')
@@ -35,7 +33,7 @@ export class BalanceController {
     @Headers('x-user-id') userId: string,
   ): Promise<CryptoBalance> {
     if (!userId) {
-      throw new HttpException(
+      throw new AppError(
         'X-User-ID header is required',
         HttpStatus.BAD_REQUEST,
       );
@@ -43,7 +41,7 @@ export class BalanceController {
 
     const balance = await this.balanceService.getUserBalance(userId);
     if (!balance) {
-      throw new HttpException(`User ${userId} not found`, HttpStatus.NOT_FOUND);
+      throw new AppError(`User ${userId} not found`, HttpStatus.NOT_FOUND);
     }
     return balance;
   }
@@ -54,7 +52,7 @@ export class BalanceController {
     @Query('currency') currency = 'usd',
   ): Promise<{ value: number; currency: string }> {
     if (!userId) {
-      throw new HttpException(
+      throw new AppError(
         'X-User-ID header is required',
         HttpStatus.BAD_REQUEST,
       );
@@ -65,7 +63,7 @@ export class BalanceController {
       currency,
     );
     if (!value) {
-      throw new HttpException(`User ${userId} not found`, HttpStatus.NOT_FOUND);
+      throw new AppError(`User ${userId} not found`, HttpStatus.NOT_FOUND);
     }
     return { value: value, currency };
   }
@@ -77,13 +75,16 @@ export class BalanceController {
     // ): Promise<void> {
   ): Promise<CryptoBalance> {
     if (!userId) {
-      throw new HttpException(
+      throw new AppError(
         'X-User-ID header is required',
         HttpStatus.BAD_REQUEST,
       );
     }
     if (!targetPercentages || Object.keys(targetPercentages).length === 0) {
-      throw new AppError('Balance data cannot be empty', 400);
+      throw new AppError(
+        'Balance data cannot be empty',
+        HttpStatus.BAD_REQUEST,
+      );
     }
     return this.balanceService.rebalanceUser(userId, targetPercentages);
   }
@@ -93,7 +94,7 @@ export class BalanceController {
     @Headers('x-user-id') userId: string,
   ): Promise<{ message: string }> {
     if (!userId) {
-      throw new HttpException(
+      throw new AppError(
         'X-User-ID header is required',
         HttpStatus.BAD_REQUEST,
       );
@@ -109,19 +110,22 @@ export class BalanceController {
     @Body() body: { coin: string; amount: number },
   ): Promise<CryptoBalance> {
     if (!userId) {
-      throw new HttpException(
+      throw new AppError(
         'X-User-ID header is required',
         HttpStatus.BAD_REQUEST,
       );
     }
     if (!body.coin || !body.amount) {
-      throw new HttpException(
+      throw new AppError(
         'Coin and amount must be provided',
         HttpStatus.BAD_REQUEST,
       );
     }
     if (body.amount === 0) {
-      throw new BadRequestException(`amount can't be changed by 0`);
+      throw new AppError(
+        `amount can't be changed by 0`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
     return this.balanceService.updateBalance(userId, body.coin, body.amount);
   }
@@ -131,7 +135,7 @@ export class BalanceController {
     @Headers('x-user-id') userId: string,
   ): Promise<CryptoBalance> {
     if (!userId) {
-      throw new HttpException(
+      throw new AppError(
         'X-User-ID header is required',
         HttpStatus.BAD_REQUEST,
       );
