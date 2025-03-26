@@ -6,8 +6,8 @@ X-User-Password: admin123
 
 ### Add a new user
 POST http://localhost:3001/balances/user/add
-X-User-ID: 1234567
-X-User-Password: 1234567
+X-User-ID: 123456
+X-User-Password: 123456
 Content-Type: application/json
 
 ### delete user
@@ -30,7 +30,7 @@ Content-Type: application/json
 
 ### rebalance
 PUT http://localhost:3001/balances/user/rebalance
-X-User-ID: 123456
+X-User-ID: 12345678
 X-User-Password: admin123
 Content-Type: application/json
 
@@ -40,13 +40,13 @@ Content-Type: application/json
 
 ### Get User Balance Value
 GET http://localhost:3001/balances/user/value?currency=ils
-x-user-id: 123456
+x-user-id: 12345678
 X-User-Password: admin123
 
 ###transfer coin between users
 PUT http://localhost:3001/balances/user/transfer
-X-User-ID: 123456
-X-User-Password: 123456
+X-User-ID: 1234567
+X-User-Password: 1234567
 Content-Type: application/json
 
 {
@@ -66,14 +66,13 @@ GET http://localhost:3002/rates/rate?coin=bitcoin&currency=usd
 GET http://localhost:3002/rates/rate?coin=ethereum&currency=usd
 
 ### Get ethereum price in ILS
-GET http://localhost:3002/rates/rate?coin=ethereum&currency=ils&skipCache=true
+GET http://localhost:3002/rates/rate?coin=ethereum&currency=ils
 
 ### coin not exist
-GET http://localhost:3002/rates/rate?coin=ethdsadaeum&currency=ils&skipCache=true
+GET http://localhost:3002/rates/rate?coin=ethdsadaeum&currency=ils
 
 ### currency not exist
-GET http://localhost:3002/rates/rate?coin=ethereum&currency=issss&skipCache=true
-
+GET http://localhost:3002/rates/rate?coin=ethereum&currency=issss
 
 ### Get supported coins
 GET http://localhost:3002/rates/coins
@@ -84,3 +83,11 @@ GET http://localhost:3002/rates/currencies
 ### Get multiple coin rates
 GET http://localhost:3002/rates?coins=ethereum,bitcoin&currency=ils
 Content-Type: application/json
+
+### Set Tracked Coins
+POST http://localhost:3002/rates/coins
+Content-Type: application/json
+
+{
+  "coins": ["bitcoin", "ethereum", "solana"]
+}

@@ -15,7 +15,9 @@ export class RateService {
   private readonly filePath = path.join(__dirname, '../../data/rates.json');
 
   private readonly COINGECKO_URL = 'https://api.coingecko.com/api/v3/simple';
-  private readonly GET_RATES_URL = this.COINGECKO_URL + '/price';
+  private readonly ENDPOINT_PRICE = '/price';
+  private readonly GET_RATES_URL = this.COINGECKO_URL + this.ENDPOINT_PRICE;
+  private readonly DEFAULT_CURRENCY = 'usd';
 
   private trackedCoins: string[] = [];
   private trackedCurrencies: string[] = [];
@@ -46,9 +48,17 @@ export class RateService {
   }
 
   //changes trackedCoins  array
-  setTrackedCoins(trackedCoins: string[]): void {
-    this.trackedCoins = [...new Set(trackedCoins)];
-    this.logger.log(`updated tracked coins with ${trackedCoins.length} coins`);
+  async setTrackedCoins(trackedCoins: string[]): Promise<void> {
+    try {
+      //fetch rates for new coins to validate coins are supported
+      await this.getMultipleRates(trackedCoins);
+      this.trackedCoins = [...new Set(trackedCoins)];
+      this.logger.log(
+        `updated tracked coins with ${trackedCoins.length} coins`,
+      );
+    } catch (error) {
+      this.errorHandler.handleError(error);
+    }
   }
 
   //changes trackedCurrencies array
@@ -181,11 +191,10 @@ export class RateService {
   //get rate for 1 crypto coin with 1 currency
   async getCoinRate(
     coin: string,
-    currency: string = 'usd',
-    skipCache: boolean = false,
+    currency: string = this.DEFAULT_CURRENCY,
   ): Promise<number> {
-    //if skipCache wasn't selected or cache isn't expired
-    if (!skipCache && Date.now() < this.cacheExpiry) {
+    //if cache isn't expired
+    if (Date.now() < this.cacheExpiry) {
       //search cache for rate:
       const cachedRate = this.cachedCoinRates[coin]?.[currency];
       if (cachedRate) {
@@ -234,7 +243,7 @@ export class RateService {
           `Rate limit hit for CoinGecko, retrying in 10 seconds...`,
         );
         await new Promise((res) => setTimeout(res, 10_000));
-        return this.getCoinRate(coin, currency, skipCache);
+        return this.getCoinRate(coin, currency);
       }
       this.logger.error(
         `Error fetching price for ${coin}: ${error instanceof AxiosError && error.message}`,
@@ -248,7 +257,7 @@ export class RateService {
   //for coins that are in cache it returns the rate from cache
   async getMultipleRates(
     coins: string[],
-    currency: string = 'usd',
+    currency: string = this.DEFAULT_CURRENCY,
   ): Promise<CoinRate> {
     const rates: CoinRate = {};
     const coinsToFetch: string[] = [];
