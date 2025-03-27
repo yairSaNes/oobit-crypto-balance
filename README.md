@@ -1,103 +1,163 @@
-# Crypto Balance & Exchange Rate Service
-
-This project consists of two microservices: **Balance Service** and **Rate Service**, designed to manage user balances in various cryptocurrencies and retrieve real-time exchange rates.
+# Crypto Balance System
 
 ## Getting Started
 
-### Prerequisites
-- Docker (optional for containerized deployment)
-- Node.js & npm
+### Running in Docker Environment
 
-### Running the Services
-
-#### Using Docker
-To run the services in a Docker environment:
-
-**1. Build the balance-service image:**
+#### Build Images
 ```sh
+# Build balance-service image
 docker build --target runner-balance -t balance-service .
-```
 
-**2. Build the rate-service image:**
-```sh
+# Build rate-service image
 docker build --target runner-rate -t rate-service .
 ```
 
-**3. Run the balance-service container:**
+#### Run Containers
 ```sh
+# Run balance-service container
 docker run -p 3001:3001 -e PORT=3001 -e RATE_SERVICE_URL=http://host.docker.internal:3002 balance-service
-```
 
-**4. Run the rate-service container:**
-```sh
+# Run rate-service container
 docker run -p 3002:3002 -e PORT=3002 rate-service
 ```
 
-#### Running Locally
-To run the services on your local machine:
+### Running Locally
 
-1. Install dependencies:
 ```sh
 npm install
-```
-
-2. Build the project:
-```sh
 npm run build
 ```
 
-3. Start the balance service:
+#### Start Services
 ```sh
+# In terminal 1
 npm run start:balance
-```
 
-4. Start the rate service:
-```sh
+# In terminal 2
 npm run start:rate
 ```
 
-### Sending Requests
-You can use the `requests.http` file to test API endpoints using an HTTP client such as VS Code's REST Client extension. Alternatively, use `curl` to send requests from the command line.
+### Testing Requests
+Requests can be sent using the `requests.http` file included in the project, or via `curl` commands.
 
----
+------------------------------------------------------------------------------------------------------------------
 
-## Services Overview
+## Service Overview
 
-### 1. Balance Service (`/balances`)
-Manages user balances, transfers, and rebalancing.
+### **Balance Service** (Port 3001)
+Manages user crypto balances, transfers, and rebalancing.
 
-#### Endpoints:
+#### **Endpoints:**
 
-- **`GET /balances`** - Retrieve all user balances (Admin only).
-- **`GET /balances/user`** - Retrieve a specific user's balance.
-- **`GET /balances/user/value`** - Get a user's balance value in a specific currency.
-- **`POST /balances/user/add`** - Create a new user.
-- **`PUT /balances/user/update`** - Update a user's balance.
-- **`PUT /balances/user/rebalance`** - Rebalance a user's portfolio.
-- **`PUT /balances/user/transfer`** - Transfer crypto between users.
-- **`DELETE /balances/user/remove`** - Remove a user.
+##### **1. Get all user balances**
+**GET** `/balances`
+- **Headers:**
+  - `X-User-Password` (string, required) → Admin password for authentication.
+- **Response:** Returns all users' balances.
 
-### 2. Rate Service (`/rates`)
-Fetches cryptocurrency exchange rates.
+##### **2. Get a specific user balance**
+**GET** `/balances/user`
+- **Headers:**
+  - `X-User-ID` (string, required) → User's ID.
+  - `X-User-Password` (string, required) → User's password.
+- **Response:** Returns the balance of the requested user.
 
-#### Endpoints:
+##### **3. Get user balance value in a specific currency**
+**GET** `/balances/user/value`
+- **Headers:**
+  - `X-User-ID` (string, required) → User's ID.
+  - `X-User-Password` (string, required) → User's password.
+- **Query Parameters:**
+  - `currency` (string, optional, default: `usd`) → Target currency for conversion.
+- **Response:** Returns the user's balance value in the specified currency.
 
-- **`GET /rates/rate?coin={coin}&currency={currency}`** - Get the exchange rate for a specific coin in a specified currency.
-- **`GET /rates/supported-coins`** - Retrieve a list of supported cryptocurrencies.
-- **`GET /rates/supported-currencies`** - Retrieve a list of supported fiat currencies.
+##### **4. Create a new user**
+**POST** `/balances/user/add`
+- **Headers:**
+  - `X-User-ID` (string, required) → User's ID.
+  - `X-User-Password` (string, required) → Password for the user.
+- **Response:** Confirms user creation.
 
----
+##### **5. Update user balance**
+**PUT** `/balances/user/update`
+- **Headers:**
+  - `X-User-ID` (string, required) → User's ID.
+  - `X-User-Password` (string, required) → User's password.
+- **Body:**
+  ```json
+  {
+    "coin": "string", // Required, cryptocurrency symbol (e.g., "BTC")
+    "amount": "number" // Required, amount to add or subtract
+  }
+  ```
+- **Response:** Returns updated balance.
+
+##### **6. Transfer cryptocurrency to another user**
+**PUT** `/balances/user/transfer`
+- **Headers:**
+  - `X-User-ID` (string, required) → User's ID.
+  - `X-User-Password` (string, required) → User's password.
+- **Body:**
+  ```json
+  {
+    "targetUserId": "string", // Required, recipient's user ID
+    "coin": "string", // Required, cryptocurrency symbol
+    "amount": "number" // Required, amount to transfer
+  }
+  ```
+- **Response:** Returns updated balance of the sender.
+
+##### **7. Rebalance user portfolio**
+**PUT** `/balances/user/rebalance`
+- **Headers:**
+  - `X-User-ID` (string, required) → User's ID.
+  - `X-User-Password` (string, required) → User's password.
+- **Body:**
+  ```json
+  {
+    "BTC": 50, // Percentage allocation
+    "ETH": 50  
+  }
+  ```
+- **Response:** Returns rebalanced portfolio.
+
+##### **8. Remove a user**
+**DELETE** `/balances/user/remove`
+- **Headers:**
+  - `X-User-ID` (string, required) → User's ID.
+  - `X-User-Password` (string, required) → User's password.
+- **Response:** Confirms user removal.
+
+------------------------------------------------------------------------------------------------------------------
+
+### **Rate Service** (Port 3002)
+Provides cryptocurrency exchange rates.
+
+#### **Endpoints:**
+
+##### **1. Get exchange rate for a cryptocurrency**
+**GET** `/rates/rate`
+- **Query Parameters:**
+  - `coin` (string, required) → Cryptocurrency symbol (e.g., "bitcoin").
+  - `currency` (string, optional, default: `usd`) → Target currency (e.g., "eur").
+  - `skipCache` (boolean, optional, default: `false`) → If `true`, forces a fresh API call instead of using cached data.
+- **Response:**
+  ```json
+  {
+    "rate": 43500.75, // Example rate
+    "currency": "usd"
+  }
+  ```
+
+------------------------------------------------------------------------------------------------------------------
 
 ## Shared Module
-Both services use shared utilities for:
-- **Authentication** (`auth.service.ts`) - Handles user authentication.
-- **Logging** (`logging.service.ts`) - Provides logging utilities.
-- **Custom Errors** (`AppError.ts`) - Defines standardized error handling.
+The shared module provides utilities used by both services, including:
+- **Authentication Service:** Handles user authentication and password management.
+- **Logging Service:** Provides logging capabilities.
+- **AppError Class:** Standardized error handling.
+- **DTOs (Data Transfer Objects):** Ensures validation and consistency in API requests.
 
-This structure ensures consistency and reusability across services.
-
----
-
-## License
-MIT
+This modular approach improves maintainability and code reuse across services.
 
