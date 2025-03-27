@@ -56,14 +56,21 @@ Manages user crypto balances, transfers, and rebalancing.
   - `X-User-Password` (string, required) → Admin password for authentication.
 - **Response:** Returns all users' balances.
 
-##### **2. Get a specific user balance**
+- ##### **2. Create a new user**
+**POST** `/balances/user/add`
+- **Headers:**
+  - `X-User-ID` (string, required) → User's ID.
+  - `X-User-Password` (string, required) → Password for the user.
+- **Response:** Confirms user creation.
+
+##### **3. Get a specific user balance**
 **GET** `/balances/user`
 - **Headers:**
   - `X-User-ID` (string, required) → User's ID.
   - `X-User-Password` (string, required) → User's password.
 - **Response:** Returns the balance of the requested user.
 
-##### **3. Get user balance value in a specific currency**
+##### **4. Get user balance value in a specific currency**
 **GET** `/balances/user/value`
 - **Headers:**
   - `X-User-ID` (string, required) → User's ID.
@@ -71,13 +78,6 @@ Manages user crypto balances, transfers, and rebalancing.
 - **Query Parameters:**
   - `currency` (string, optional, default: `usd`) → Target currency for conversion.
 - **Response:** Returns the user's balance value in the specified currency.
-
-##### **4. Create a new user**
-**POST** `/balances/user/add`
-- **Headers:**
-  - `X-User-ID` (string, required) → User's ID.
-  - `X-User-Password` (string, required) → Password for the user.
-- **Response:** Confirms user creation.
 
 ##### **5. Update user balance**
 **PUT** `/balances/user/update`
@@ -87,7 +87,7 @@ Manages user crypto balances, transfers, and rebalancing.
 - **Body:**
   ```json
   {
-    "coin": "string", // Required, cryptocurrency symbol (e.g., "BTC")
+    "coin": "string", // Required, cryptocurrency name (e.g., "bitcoin")
     "amount": "number" // Required, amount to add or subtract
   }
   ```
@@ -116,8 +116,8 @@ Manages user crypto balances, transfers, and rebalancing.
 - **Body:**
   ```json
   {
-    "BTC": 50, // Percentage allocation
-    "ETH": 50  
+    "BTbitcoinC": 50, // Percentage allocation
+    "ethereum": 50  
   }
   ```
 - **Response:** Returns rebalanced portfolio.
@@ -128,6 +128,17 @@ Manages user crypto balances, transfers, and rebalancing.
   - `X-User-ID` (string, required) → User's ID.
   - `X-User-Password` (string, required) → User's password.
 - **Response:** Confirms user removal.
+
+ ### approach explaiation:
+ this module supports all basic CRUD operations for users. 
+ for user actions a password is requred which is 
+ authenticated with the shared module's auth service.
+ all crypto currency rates are fetched from rate-servcie by API calls.
+ bonus features:
+ - rebalance method
+ - tranfer between users
+ - authentication
+ - periodically update system data to rate-service for rates caching mechanizm
 
 ------------------------------------------------------------------------------------------------------------------
 
