@@ -245,8 +245,15 @@ This modular approach improves maintainability and code reuse across services.
 
 ------------------------------------------------------------------------------------------------------------------
 
-## what i wpuld have done differently:
+## what i would have done differently:
 
-- add unit tests for 
+Due to time constraints, I focused on delivering a working solution with a clean and maintainable structure while prioritizing essential functionality. However, given more time, I would have made several improvements:
 
+- Extended Use of DTOs: While I used DTOs for validation, I could have applied them more extensively to enforce stricter type safety and ensure consistency in API responses.
+
+- Add Unit Tests for Core Logic: I prioritized implementing functionality over test coverage, but in a real-world scenario, I would include unit tests for critical operations like authentication, balance updates, and rate fetching to improve reliability.
+
+- Implement Integration Tests: Since the system consists of multiple services, integration tests would help validate real-world interactions between the balance-service and rate-service.
+
+These trade-offs allowed me to complete the project efficiently while maintaining a modular and extensible architecture.
 
