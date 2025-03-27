@@ -1,5 +1,18 @@
 # Crypto Balance System
 
+## Introduction
+
+The Crypto Balance System is a simple microservices-based application for managing cryptocurrency balances and fetching exchange rates. It consists of two services:
+
+Balance Service (Port 3001): Handles user balances, transactions, and portfolio rebalancing.
+
+Rate Service (Port 3002): Provides real-time exchange rates for supported cryptocurrencies and fiat currencies.
+
+The system is built using NestJS and follows a monorepo structure. It relies on CoinGecko’s API for exchange rate data and stores balance information in local JSON files.
+
+
+------------------------------------------------------------------------------------------------------------------
+
 ## Getting Started
 
 ### Running in Docker Environment
@@ -200,6 +213,24 @@ Provides cryptocurrency exchange rates.
  
 
 ------------------------------------------------------------------------------------------------------------------
+## Continuous Integration (CI)
+
+The project includes a GitHub Actions workflow for continuous integration. It runs on every pull request to the main branch and performs the following steps:
+
+Checks out the repository.
+
+Sets up Node.js (version 20.x).
+
+Installs dependencies using npm ci.
+
+Runs linting with npm run lint.
+
+Builds both services (balance-service and rate-service).
+
+This ensures code quality and that builds are successful before merging changes.
+
+------------------------------------------------------------------------------------------------------------------
+
 
 ## Shared Module
 The shared module provides utilities used by both services, including:
@@ -210,4 +241,12 @@ The shared module provides utilities used by both services, including:
 - **Interfaces:** interfaces for different system entities.
 
 This modular approach improves maintainability and code reuse across services.
+
+
+------------------------------------------------------------------------------------------------------------------
+
+## what i wpuld have done differently:
+
+- add unit tests for 
+
 
