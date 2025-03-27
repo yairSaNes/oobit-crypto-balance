@@ -39,7 +39,7 @@ npm run start:rate
 ```
 
 ### Testing Requests
-Requests can be sent using the `requests.http` file included in the project, or via `curl` commands.
+Requests can be sent using the `requests.http` file included in the project, or via a tool like postman.
 
 ------------------------------------------------------------------------------------------------------------------
 
@@ -131,9 +131,13 @@ Manages user crypto balances, transfers, and rebalancing.
 
  ### approach explaiation:
  this module supports all basic CRUD operations for users. 
+ 
  for user actions a password is requred which is 
+ 
  authenticated with the shared module's auth service.
+ 
  all crypto currency rates are fetched from rate-servcie by API calls.
+ 
  bonus features:
  - rebalance method
  - tranfer between users
@@ -150,16 +154,50 @@ Provides cryptocurrency exchange rates.
 ##### **1. Get exchange rate for a cryptocurrency**
 **GET** `/rates/rate`
 - **Query Parameters:**
-  - `coin` (string, required) → Cryptocurrency symbol (e.g., "bitcoin").
-  - `currency` (string, optional, default: `usd`) → Target currency (e.g., "eur").
-  - `skipCache` (boolean, optional, default: `false`) → If `true`, forces a fresh API call instead of using cached data.
-- **Response:**
+  - `coin` (string, required) → Cryptocurrency name.
+  - `currency` (string, required) → Target currency.
+- **Response:** Returns the exchange rate.
+
+##### **2. Get multiple coin rates**
+**GET** `/rates`
+- **Query Parameters:**
+  - `coins` (string, required) → Comma-separated list of cryptocurrencies.
+  - `currency` (string, required) → Target currency.
+- **Response:** Returns exchange rates for multiple coins.
+
+##### **3. Get supported coins**
+**GET** `/rates/coins`
+- **Response:** Returns a list of supported coins.
+
+##### **4. Get supported currencies**
+**GET** `/rates/currencies`
+- **Response:** Returns a list of supported currencies.
+
+##### **5. Set tracked coins**
+**POST** `/rates/coins`
+- **Body:**
   ```json
   {
-    "rate": 43500.75, // Example rate
-    "currency": "usd"
+    "coins": ["bitcoin", "ethereum", "solana"]
   }
   ```
+- **Response:** Updates the list of tracked coins.
+
+ ### approach explaiation:
+ this module supports the communication to the coin gecho api. 
+
+ a caching mechanizm is implemented to minimize API calls:
+
+ cached data is only for coins and currencies that are contained in trackedCoins and trackedCurrencies
+
+ cache ttl is 1 minute (because rates change prequently)
+
+ rates are fetched to cache every 1 minute
+
+ cached data is stored in ram for fast readings
+
+ trackedCoins and trackedCurrencies are periodically backed-up to file every 5 minutes
+ 
 
 ------------------------------------------------------------------------------------------------------------------
 
@@ -167,8 +205,9 @@ Provides cryptocurrency exchange rates.
 The shared module provides utilities used by both services, including:
 - **Authentication Service:** Handles user authentication and password management.
 - **Logging Service:** Provides logging capabilities.
-- **AppError Class:** Standardized error handling.
-- **DTOs (Data Transfer Objects):** Ensures validation and consistency in API requests.
+- **AppError Class + Error Handling Module:** Standardized error handling.
+- **File Service:** Provides unified File system capabilities.
+- **Interfaces:** interfaces for different system entities.
 
 This modular approach improves maintainability and code reuse across services.
 
